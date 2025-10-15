@@ -26,6 +26,15 @@ export default async function miniplayerSettings() {
         default: { width: 400, height: 200 } 
     });
 
+    game.settings.register("wgtgm-mini-player", "stop-on-new-playlist", {
+        name: "Stop on New Playlist",
+        hint: "Stop playback of the current track when a track from a new playlist is selected.",
+        scope: "client",
+        config: true,
+        type: Boolean,
+        default: true
+    });
+    
     game.settings.register("wgtgm-mini-player", "lastPlayedTrack", {
         scope: "client",
         config: false,

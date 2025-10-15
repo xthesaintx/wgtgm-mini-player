@@ -49,19 +49,19 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         game.settings.set("wgtgm-mini-player", "mpSheetDimensions", {width, height, left, top });
         clearInterval(this.#timestampInterval);
         this._resizeObserver?.disconnect();
-        if (this.#currentTrack) {
-            const playlist = game.playlists.get(this.#currentPlaylist?.id);
-            const sound = playlist?.sounds.get(this.#currentTrack.id);
-            const lastPlayed = {
-                playlistId: playlist.id,
-                trackId: sound.id,
-                pausedTime: sound?.pausedTime || 0,
-                playing: sound.playing
-            };
-            game.settings.set("wgtgm-mini-player", "lastPlayedTrack", lastPlayed);
-        } else {
-            game.settings.set("wgtgm-mini-player", "lastPlayedTrack", null);
-        }
+        // if (this.#currentTrack) {
+        //     const playlist = game.playlists.get(this.#currentPlaylist?.id);
+        //     const sound = playlist?.sounds.get(this.#currentTrack.id);
+        //     const lastPlayed = {
+        //         playlistId: playlist.id,
+        //         trackId: sound.id,
+        //         pausedTime: sound?.pausedTime || 0,
+        //         playing: sound.playing
+        //     };
+        //     game.settings.set("wgtgm-mini-player", "lastPlayedTrack", lastPlayed);
+        // } else {
+        //     game.settings.set("wgtgm-mini-player", "lastPlayedTrack", null);
+        // }
         return super.close(options);
     }
     
@@ -124,8 +124,15 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
             durationTimeEl.textContent = "00:00";
         }
     }
-
     syncState() {
+        // If a playlist is already selected, just refresh the UI without changing the selection.
+        if (this.#currentPlaylist) {
+            this.#updateUIFromState();
+            this.#updatePlayPauseIcon();
+            return;
+        }
+
+        // Otherwise, determine the initial state to display.
         const playingSound = game.playlists.playing.find(p => p.sounds.some(s => s.playing))?.sounds.find(s => s.playing);
 
         if (playingSound) {
@@ -224,11 +231,20 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         this.#currentTrack = null; 
         this.#updateUIFromState();
     }
+
     async _onTrackSelect(event) {
         const trackId = event.currentTarget.value;
         if (!this.#currentPlaylist) return;
         const newTrack = this.#currentPlaylist.sounds.get(trackId);
         if (!newTrack) return;
+        
+        if (game.settings.get("wgtgm-mini-player", "stop-on-new-playlist")) {
+            for (const p of game.playlists.playing) {
+                if (p.id !== this.#currentPlaylist.id) {
+                    await p.stopAll();
+                }
+            }
+        }
 
         this.#currentTrack = newTrack;
         
@@ -236,26 +252,43 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
 
         this.#updateTrackInfo();
         this.#updatePlayPauseIcon();
-    }    
-
+    }  
     static async #onTogglePlayPause(event) {
         if (!this.#currentPlaylist || !this.#currentTrack) return;
+        
         const playlist = game.playlists.get(this.#currentPlaylist.id);
         const sound = playlist?.sounds.get(this.#currentTrack.id);
+
         if (sound.playing) {
             const ct = sound.sound.currentTime;
             await sound.update({ playing: false, pausedTime: ct });
         } else {
+            if (game.settings.get("wgtgm-mini-player", "stop-on-new-playlist")) {
+                for (const p of game.playlists.playing) {
+                    if (p.id !== this.#currentPlaylist.id) {
+                        await p.stopAll();
+                    }
+                }
+            }
             await playlist.playSound(sound);
         }
         this.#updatePlayPauseIcon();
     }
 
     static async #onStopTrack(event) {
-        if (!this.#currentPlaylist || !this.#currentTrack) return;
-        await this.#currentPlaylist.stopSound(this.#currentTrack);
+        if (this.#currentTrack && this.#currentPlaylist) {
+            const playlist = game.playlists.get(this.#currentPlaylist.id);
+            const sound = playlist?.sounds.get(this.#currentTrack.id);
+            if (sound?.playing) {
+                await playlist.stopSound(sound);
+                return;
+            }
+        }
+        
+        for (const p of game.playlists.playing) {
+            await p.stopAll();
+        }
     }
-
 
    static async #onNextTrack(event) {
         if (this.#currentPlaylist) {

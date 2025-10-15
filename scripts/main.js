@@ -53,9 +53,23 @@ Hooks.on("renderChatMessageHTML", (app, html, data) => {
     });
 });
 
+Hooks.on("deletePlaylistSound", (playlist, changes, options, userId) => {
+    if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.rendered) {
+        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.syncState();
+        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render();
+    }
+});
+
+Hooks.on("createPlaylistSound", (playlist, changes, options, userId) => {
+    if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.rendered) {
+        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.syncState();
+        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render();
+    }
+});
 Hooks.on("updatePlaylist", (playlist, changes, options, userId) => {
     if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.rendered) {
         game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.syncState();
+        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render();
     }
 });
 
