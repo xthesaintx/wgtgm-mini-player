@@ -39,10 +39,10 @@ jobs:
           artifacts: "./module.json, ./module.zip"
           tag: ${{ github.event.release.tag_name }}
 
-      # 5. Publish the module to the Foundry VTT website
-      - name: Publish to FoundryVTT Website
-        uses: cs96and/FoundryVTT-release-package@v1
-        with:
-          package-token: ${{ secrets.PACKAGE_TOKEN }}
-          manifest-url: https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/module.json
-          notes-url: "https://github.com/${{ github.repository }}/blob/main/ChangeLog.md"
+      # # 5. Publish the module to the Foundry VTT website
+      # - name: Publish to FoundryVTT Website
+      #   uses: cs96and/FoundryVTT-release-package@v1
+      #   with:
+      #     package-token: ${{ secrets.PACKAGE_TOKEN }}
+      #     manifest-url: https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/module.json
+      #     notes-url: "https://github.com/${{ github.repository }}/blob/main/ChangeLog.md"
