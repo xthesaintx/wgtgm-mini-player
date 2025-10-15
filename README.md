@@ -7,9 +7,8 @@ Mini Player is a compact and intuitive audio player for Foundry VTT. It provides
 - Remembers the last played track, even after closing.
 - Persistent window size and position.
 
+## YouTube Overview
 [![Mini Player Video Overview](https://img.youtube.com/vi/7VqU8gyq8Oc/0.jpg)](https://youtu.be/7VqU8gyq8Oc?si=q1KFPZVy2fGuqIn8)
-
-[YouTube Overview] (https://youtube.com/playlist?list=PLcqrnEiDn6hKHns-guAooHUx8h83XXaBd&si=hzKpExa9gvKuxonN)
 
 Discord: https://discord.gg/fycwH79s2y
 
