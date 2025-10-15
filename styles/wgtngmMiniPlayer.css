@@ -8,7 +8,7 @@
 }
 
 .mp-miniplayer-open  {
-        margin: 0px 10px 0px 10px;
+    margin: 0px 10px 0px 10px;
     width: -webkit-fill-available;
 }
 
@@ -20,7 +20,7 @@
 
 .wgtngmMiniPlayer .window-header {
     max-height: 24px;
-    background: none;
+/*    background: none;*/
     border: none;
 }
 /*.wgtngmMiniPlayer .window-header .window-title,
