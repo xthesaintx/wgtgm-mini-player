@@ -7,6 +7,10 @@
 	max-width: 500px;
 }
 
+.mp-miniplayer-open  {
+        margin: 0px 10px 0px 10px;
+    width: -webkit-fill-available;
+}
 
 .application.wgtngmMiniPlayer.minimized
 {
