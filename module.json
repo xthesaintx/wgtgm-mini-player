@@ -1,0 +1,33 @@
+{
+  "id": "wgtgm-mini-player",
+  "title": "Mini Player",
+  "version": "",
+  "esmodules": ["scripts/main.js"],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "url": "https://wgtngm.com",
+  "manifest": "",
+  "download": "",
+  "readme": "https://campaigncodex.wgtngm.com/miniplayer",
+
+  "authors": [
+    {
+      "name": "Stephen Garrett",
+      "url": "https://www.patreon.com/wgtngm",
+      "flags": {}
+    }
+  ],
+  "styles": ["styles/wgtngmMiniPlayer.css"],
+  "relationships": {
+    "systems": []
+  }
+}

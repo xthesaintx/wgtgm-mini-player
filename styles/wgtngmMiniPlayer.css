@@ -1,0 +1,247 @@
+/* All styles are now scoped to the .wgtngmMiniPlayer application window */
+.application.wgtngmMiniPlayer
+{
+	min-height: 100px;
+	max-height: 200px;
+	min-width: 250px;
+	max-width: 500px;
+}
+
+
+.application.wgtngmMiniPlayer.minimized
+{
+  min-width: 0px;
+  min-height: 0px;
+}
+
+.wgtngmMiniPlayer .window-header {
+    max-height: 24px;
+    background: none;
+    border: none;
+}
+/*.wgtngmMiniPlayer .window-header .window-title,
+.wgtngmMiniPlayer .window-header .window-icon {
+    display: none;
+}*/
+
+.wgtngmMiniPlayer .window-header .header-control:hover {
+    background: none;
+}
+
+.wgtngmMiniPlayer .window-content{
+    padding: 0px 10px 10px 10px;
+}
+
+.wgtngmMiniPlayer .wgtngm-mini-player {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0; 
+    position: relative;
+    overflow: visible;
+}
+
+/* --- Hover Drawer Styles --- */
+.wgtngmMiniPlayer .wgtngm-drawer-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    display: flex;
+    justify-content: center;
+}
+
+.wgtngmMiniPlayer .wgtngm-drawer-handle {
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+/*    border: 1px solid var(--color-border-light-tertiary);*/
+border:none;
+    border-top: none;
+    border-radius: 0 0 5px 5px;
+    padding: 2px 6px;
+    transition: color 0.3s ease-in-out;
+    top: -10px;
+    position: absolute;
+}
+
+.wgtngmMiniPlayer .wgtngm-drawer-container:hover .wgtngm-drawer-handle {
+    color: var(--color-text-highlight);
+    transform: translateY(10px);
+}
+.wgtngmMiniPlayer .wgtngm-drawer-content .form-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+.wgtngmMiniPlayer .wgtngm-drawer-content .form-group select {
+    height: 24px;
+}
+   
+
+.wgtngmMiniPlayer .wgtngm-drawer-content {
+    position: absolute;
+    top: 10px;
+    width: 95%;
+    background: var(--background);
+    border: 1px solid var(--color-border-light-tertiary);
+    border-radius: 5px;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(-50px);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    pointer-events: none;
+}
+
+.wgtngmMiniPlayer .wgtngm-drawer-container:hover .wgtngm-drawer-content {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* --- Player Body --- */
+.wgtngmMiniPlayer .wgtngm-player-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
+    padding: 8px;
+    padding-top: 25px; 
+}
+
+/* --- Main Bar --- */
+.wgtngmMiniPlayer .wgtngm-main-bar {
+    text-align: center;
+    border-bottom: 1px solid var(--color-border-light-tertiary);
+    padding-bottom: 5px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+.wgtngmMiniPlayer .wgtngm-main-bar .wgtngm-now-playing {
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.wgtngmMiniPlayer .wgtngm-control-wrapper{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* --- Controls & Playback --- */
+.wgtngmMiniPlayer .wgtngm-player-controls { display: flex; gap: 5px; }
+.wgtngmMiniPlayer .wgtngm-player-controls button { flex-grow: 1; }
+.wgtngmMiniPlayer .wgtngm-playback-bar { display: flex; align-items: center; gap: 10px; }
+.wgtngmMiniPlayer .wgtngm-volume-control { display: flex; align-items: center; gap: 5px; flex-grow: 1; }
+.wgtngmMiniPlayer .wgtngm-volume-control input[type="range"] { flex-grow: 1; }
+.wgtngmMiniPlayer .wgtngm-time-display { font-size: 0.9em; white-space: nowrap; }
+.wgtngmMiniPlayer .wgtngm-track-info { margin-top: auto; }
+.wgtngmMiniPlayer .wgtngm-next-up { text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* --- COMPACT RESPONSIVE MODE --- */
+/*.wgtngmMiniPlayer.compact-mode .wgtngm-main-bar .wgtngm-now-playing,*/
+/*.wgtngmMiniPlayer.compact-mode .wgtngm-player-controls .wgtngm-previous-track,*/
+/*.wgtngmMiniPlayer.compact-mode .wgtngm-player-controls .wgtngm-stop-track,*/
+.wgtngmMiniPlayer.compact-mode .wgtngm-playback-bar .wgtngm-time-display,
+.wgtngmMiniPlayer.compact-mode .wgtngm-track-info {
+    display: none;
+}
+
+.wgtngmMiniPlayer.compact-mode .wgtngm-control-wrapper{
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 4px;
+}
+.wgtngmMiniPlayer.compact-mode .wgtngm-control-wrapper button {
+    width: 24px;
+    height: 4px;
+    border: none;
+    padding: 4px;
+}
+
+.wgtngmMiniPlayer.compact-mode .wgtngm-main-bar {
+    border-bottom: none;
+}
+.wgtngmMiniPlayer.compact-mode .wgtngm-player-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
+    padding: 8px;
+    padding-top: 8px; 
+}
+
+
+/* --- Hover Drawer Styles --- */
+.wgtngmMiniPlayer.compact-mode .wgtngm-drawer-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    display: flex;
+    justify-content: center;
+}
+
+.wgtngmMiniPlayer.compact-mode .wgtngm-drawer-handle {
+    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border: none;
+    border-top: none;
+    border-radius: 0 0 5px 5px;
+    padding: 2px 6px;
+    transition: color 0.3s ease-in-out;
+    top: -5px;
+    position: absolute;
+    opacity: 0.5;
+}
+
+.wgtngmMiniPlayer.compact-mode .wgtngm-drawer-container:hover .wgtngm-drawer-handle {
+    color: var(--color-text-highlight);
+    transform: translateY(10px);
+}
+.wgtngmMiniPlayer.compact-mode .wgtngm-drawer-content .form-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+.wgtngmMiniPlayer.compact-mode .wgtngm-drawer-content .form-group select {
+    height: 18px;
+}
+
+.wgtngmMiniPlayer.compact-mode .wgtngm-drawer-content .form-group label {
+    display: none;
+}   
+
+.wgtngmMiniPlayer.compact-mode .wgtngm-drawer-content {
+    position: absolute;
+    top: 5px;
+    width: 95%;
+    background: var(--background);
+    border: 1px solid var(--color-border-light-tertiary);
+    border-radius: 5px;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(-25px);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    pointer-events: none;
+}
+
+.wgtngmMiniPlayer .wgtngm-drawer-container:hover .wgtngm-drawer-content {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}

@@ -1,0 +1,58 @@
+<section class="wgtngm-mini-player">
+    <div class="wgtngm-drawer-container">
+        <div class="wgtngm-drawer-handle">
+            <i class="fas fa-caret-down"></i>
+        </div>
+        <div class="wgtngm-drawer-content">
+            <div class="form-group">
+                <label for="playlist-select">Playlist:</label>
+                <select name="playlist-select" id="playlist-select">
+                    {{#each playlists}}
+                    <option value="{{this.id}}">{{this.name}}</option>
+                    {{/each}}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="track-select">Track:</label>
+                <select name="track-select" id="track-select">
+                    <option value="">--Select a Track--</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="wgtngm-player-body">
+        <div class="wgtngm-main-bar">
+            <div class="wgtngm-now-playing">
+                <span class="wgtngm-track-name">None</span>
+            </div>
+            <div class="wgtngm-time-display">
+                <span class="wgtngm-current-time">00:00</span> / <span class="wgtngm-duration-time">00:00</span>
+            </div> 
+        </div>
+        <div class="wgtngm-control-wrapper">
+        <div class="wgtngm-player-controls">
+            <button class="wgtngm-previous-track" data-action="previous-track" title="Previous Track"><i class="fas fa-backward"></i></button>
+            <button data-action="toggle-play-pause" title="Play/Pause"><i class="fas fa-play"></i></button>
+            <button class="wgtngm-stop-track" data-action="stop-track" title="Stop"><i class="fas fa-stop"></i></button>
+            <button data-action="next-track" title="Next Track"><i class="fas fa-forward"></i></button>
+        </div>
+
+        <div class="wgtngm-playback-bar">
+            <div class="wgtngm-volume-control">
+                <button type="button" class="wgtngm-mute-button" data-action="toggle-mute" title="Mute">
+                    <i class="fas fa-volume-high"></i>
+                </button>
+                <input type="range" name="volume" min="0" max="1" step="0.05" value="">
+            </div>
+
+        </div>
+    </div>
+        <div class="wgtngm-track-info">
+            <div class="wgtngm-next-up">
+                <strong>Next:</strong>
+                <span class="wgtngm-next-track-name">--</span>
+            </div>
+        </div>
+    </div>
+</section>
