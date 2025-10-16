@@ -16,6 +16,8 @@ Website: www.wgtngm.com
 
 Patreon: www.patreon.com/wgtngm
 
+Official Package URL: https://foundryvtt.com/packages/wgtgm-mini-player
+
 ## 📖 [Documentation](https://campaigncodex.wgtngm.com/miniplayer)
 
 
@@ -27,7 +29,7 @@ For bug reports, feature requests or general chat about the module or other publ
 
 1. In Foundry, navigate to the Add-on Modules tab.  
 2. Click Install Module.  
-3. Paste the manifest URL for your Foundry version:  
-   * Foundry v13: [https://github.com/xthesaintx/wgtgm-mini-player/releases/latest/download/module.json](https://github.com/xthesaintx/wgtgm-mini-player/releases/latest/download/module.json)
+3. Either search for "Mini Player" or  paste the manifest URL:   
+   [https://github.com/xthesaintx/wgtgm-mini-player/releases/latest/download/module.json](https://github.com/xthesaintx/wgtgm-mini-player/releases/latest/download/module.json)
 4. Click Install.  
 5. Enable the module in your world.
