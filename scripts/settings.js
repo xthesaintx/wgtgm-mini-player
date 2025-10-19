@@ -1,7 +1,8 @@
 import {
     localize,
     format,
-    openwgtngmMiniPlayerSheet
+    openwgtngmMiniPlayerSheet,
+    openwgtngmSoundboardSheet
 } from "./helper.js";
 export const MODULE_NAME = "wgtngmMiniPlayer";
 
@@ -25,6 +26,35 @@ export default async function miniplayerSettings() {
         type: Object,
         default: { width: 400, height: 200 } 
     });
+    game.settings.register("wgtgm-mini-player", "sbSheetDimensions", {
+        scope: "client",
+        config: false,  
+        type: Object,
+        default: { width: 400, height: 200 } 
+    });
+
+    game.settings.register("wgtgm-mini-player", "remember-open-state", {
+        name: "Remember the player and soundboard state.",
+        hint: "Opens the Player and Soundboard on load if they were open when Foundry was closed.",
+        scope: "client",
+        config: true,
+        type: Boolean,
+        default: true
+    });
+
+    game.settings.register("wgtgm-mini-player", "mpDrawerOpen", {
+        scope: "client",
+        config: false,  
+        type: Boolean,
+        default: false // Default to closed
+    });
+
+    game.settings.register("wgtgm-mini-player", "mpSbOpened", {
+        scope: "client",
+        config: false,  
+        type: Object,
+        default: { mp: false, sb: false } 
+    });
 
     game.settings.register("wgtgm-mini-player", "stop-on-new-playlist", {
         name: "Stop on New Playlist",
@@ -42,20 +72,20 @@ export default async function miniplayerSettings() {
         default: null
     });
 
-        game.keybindings.register("wgtgm-mini-player", "active", {
-            name: "Open the Mini Music Player",
-            editable: [
-                {
-                    key: "KeyM",
-                    modifiers: [
-                        foundry.helpers.interaction.KeyboardManager
-                            .MODIFIER_KEYS.CONTROL,
-                    ],
-                },
-            ],
-            restricted: false,
-            onDown: () => {
-                    openwgtngmMiniPlayerSheet();
-        }
-        });
+    game.keybindings.register("wgtgm-mini-player", "MiniPlayer", {
+      name: "Open the Mini Music Player",
+      uneditable: [
+        {key: "KeyM", modifiers: [foundry.helpers.interaction.KeyboardManager.MODIFIER_KEYS.CONTROL]}
+      ],
+      onDown: () => {openwgtngmMiniPlayerSheet();}
+    });
+
+    game.keybindings.register("wgtgm-mini-player", "MiniBoard", {
+      name: "Open the Mini Soundboard",
+      uneditable: [
+        {key: "KeyM", modifiers: [foundry.helpers.interaction.KeyboardManager.MODIFIER_KEYS.CONTROL, foundry.helpers.interaction.KeyboardManager.MODIFIER_KEYS.ALT]}
+      ],
+      onDown: () => {openwgtngmSoundboardSheet();}
+    });
+
 }

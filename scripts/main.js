@@ -4,11 +4,13 @@ import {
     localize,
     addplaylistDirectoryUI,
     openwgtngmMiniPlayerSheet,
-    format
+    format,
+    checkAndRender,
+    openIfOpened
 } from "./helper.js";
 
 import { wgtngmMiniPlayerSheet } from "./mp-player.js";
-
+import { wgtngmSoundboardSheet } from "./sb-player.js";
 Hooks.once("init", async function () {
     console.log("wgtngmMiniPlayer | Initializing");
     const templatePaths = [
@@ -24,6 +26,8 @@ Hooks.once("i18nInit", async function () {
 Hooks.once("ready", async function () {
     game.wgtngmMiniPlayer = new wgtngmMiniPlayerSheet();
     game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance = null;
+    game.wgtngmSoundboard = new wgtngmSoundboardSheet();
+    game.wgtngmSoundboard.wgtngmSoundboardInstance = null;    
     if (game.user.isGM) {
         if (game.settings.get("wgtgm-mini-player", "runonlyonce") === false) {
             await ChatMessage.create(
@@ -37,13 +41,13 @@ Hooks.once("ready", async function () {
             await game.settings.set("wgtgm-mini-player", "runonlyonce", true);
         }
     }
+    openIfOpened();
 });
 
 
 Hooks.on("renderPlaylistDirectory", (app, html, data) => {
     addplaylistDirectoryUI(html);
 });
-
 
 
 Hooks.on("renderChatMessageHTML", (app, html, data) => {
@@ -54,24 +58,19 @@ Hooks.on("renderChatMessageHTML", (app, html, data) => {
 });
 
 Hooks.on("deletePlaylistSound", (playlist, changes, options, userId) => {
-    if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.rendered) {
-        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.syncState();
-        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render();
-    }
+    checkAndRender(playlist);
 });
 
 Hooks.on("createPlaylistSound", (playlist, changes, options, userId) => {
-    if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.rendered) {
-        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.syncState();
-        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render();
-    }
+    checkAndRender(playlist);
 });
 Hooks.on("updatePlaylist", (playlist, changes, options, userId) => {
-    if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.rendered) {
-        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.syncState();
-        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render();
-    }
-});
+    checkAndRender(playlist);
+ });
+
+Hooks.on("deletePlaylist", (playlist, changes, options, userId) => {
+    checkAndRender(playlist);
+ });
 
 Hooks.on("renderSceneControls", (app , html , data , s) => {
     if (!s.parts.includes("layers")) return;

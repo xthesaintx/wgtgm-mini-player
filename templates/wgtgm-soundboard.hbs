@@ -1,0 +1,39 @@
+<div class="wgtngm-soundboard">
+    <div class="soundboard-header">
+        <button data-action="toggle-resize" class="wgtngm-resize-toggle {{#if resizeAuto}}active{{/if}}" title="Toggle Automatic Resizing">
+            <i class={{#if resizeAuto}}"fas fa-maximize"{{else}}"fas fa-expand"{{/if}}></i>
+        </button>
+        <button data-action="toggle-filter" class="wgtngm-environment-toggle {{#if showEnvironmentOnly}}active{{/if}}" title="Toggle Environment Channel Filter">
+            <i class={{#if showEnvironmentOnly}}"fas fa-tree"{{else}}"fas fa-list"{{/if}}></i>
+        </button>
+        <select name="playlist-select" id="playlist-select">
+            {{#each playlists}}
+            <option value="{{this.id}}" {{#if (eq this.id ../currentPlaylistId)}}selected{{/if}}>
+                {{#if this.playing}}&#9658;{{/if}} {{this.name}}
+            </option>
+            {{/each}}
+        </select>
+        <button data-action="mute-all" class="{{#if isMuted}}active{{/if}}" title="Mute/Unmute All">
+            <i class="fas {{#if isMuted}}fa-volume-mute{{else}}fa-volume-high{{/if}}"></i>
+        </button>
+    </div>
+    <div class="soundboard-grid">
+        {{#each sounds}}
+        <div class="sound-button-container">
+        <button class="sound-button {{#if this.playing}}playing{{/if}}" data-sound-id="{{this.id}}" title="{{this.name}}" data-action="sb-click">
+            {{#if this.image}}
+            <img src="{{this.image}}" alt="{{this.name}}">
+            {{#if ../isGM}}
+                 <button type="button" class="remove-image-button" data-sound-id="{{id}}" title="Remove Image" data-action="remove-image">
+                     <i class="fas fa-times-circle"></i>
+                 </button>
+            {{/if}}
+            {{else}}{{this.name}}
+            {{/if}}
+
+        </button>
+    </div>
+        {{/each}}
+
+    </div>
+</div>

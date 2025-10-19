@@ -4,10 +4,12 @@ import { MODULE_NAME } from "./settings.js";
  * @type {string}
  */
 import { wgtngmMiniPlayerSheet } from "./mp-player.js";
+import { wgtngmSoundboardSheet } from "./sb-player.js";
 
 export const localize = (key) => game.i18n.localize(`wgtngmMiniPlayer.${key}`);
 
-export const format = (key, data) => game.i18n.format(`wgtngmMiniPlayer.${key}`, data);
+export const format = (key, data) =>
+    game.i18n.format(`wgtngmMiniPlayer.${key}`, data);
 
 export const renderTemplate = foundry.applications.handlebars.renderTemplate;
 
@@ -19,21 +21,22 @@ export function formatTimestamp(seconds) {
     return `${minutes.paddedString(2)}:${seconds.paddedString(2)}`;
 }
 
-
 export const getButtonGrouphead = () => `
-    <div class="mp-miniplayer-button" >
+    <div class="mp-miniplayer-panel-buttons" >
         <button class="mp-miniplayer-open" type="button" title="open the miniplayer" data-action="openMP" >
-            <i class="fas fa-music"></i> Open the Mini Player
+            <i class="fas fa-music"></i> Mini Player
+        </button>
+        <button class="mp-soundboard-open" type="button" title=" Soundboard" data-action="openSB" >
+            <i class="fas fa-border-all"></i> Soundboard
         </button>
     </div>
 `;
 
-
-export async function confirmationDialog(message = "Are you sure?"){
+export async function confirmationDialog(message = "Are you sure?") {
     const proceed = await foundry.applications.api.DialogV2.confirm({
         content: message,
         rejectClose: false,
-        modal: true
+        modal: true,
     });
     return proceed;
 }
@@ -82,25 +85,77 @@ export function addplaylistDirectoryUI(html) {
     nativeHtml
         .querySelector(".mp-miniplayer-open")
         ?.addEventListener("click", async () => {
-                openwgtngmMiniPlayerSheet();
+            openwgtngmMiniPlayerSheet();
         });
+
+    nativeHtml
+        .querySelector(".mp-soundboard-open")
+        ?.addEventListener("click", async () => {
+            openwgtngmSoundboardSheet();
+        });
+
+
+}
+export function openIfOpened (){
+    const rememberState = game.settings.get("wgtgm-mini-player", "remember-open-state"); 
+    const playerStates = game.settings.get("wgtgm-mini-player", "mpSbOpened"); 
+    if (rememberState && playerStates?.mp){openwgtngmMiniPlayerSheet();}
+    if (rememberState && playerStates?.sb){openwgtngmSoundboardSheet();}
 }
 
+
 export function openwgtngmMiniPlayerSheet() {
-    if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance && game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.rendered) {
-      return;
+    if (
+        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance &&
+        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.rendered
+    ) {
+        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.close();
+        return;
     }
 
-    let savedDimensions = game.settings.get("wgtgm-mini-player", "mpSheetDimensions");
+    let savedDimensions = game.settings.get(
+        "wgtgm-mini-player",
+        "mpSheetDimensions",
+    );
     const height = savedDimensions?.height || 190;
-    game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance = new wgtngmMiniPlayerSheet({ 
-        position: { 
+    game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance = new wgtngmMiniPlayerSheet({
+        position: {
             width: savedDimensions?.width || 320,
             height: height,
             left: savedDimensions?.left || 20,
-            top: savedDimensions?.top || window.innerHeight - height - 20
-        } 
+            top: savedDimensions?.top || window.innerHeight - height - 20,
+        },
     });
     game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render(true);
-  }
+}
+
+
+export function openwgtngmSoundboardSheet() {
+    if (game.wgtngmSoundboard.wgtngmSoundboardInstance && game.wgtngmSoundboard.wgtngmSoundboardInstance.rendered) {
+      game.wgtngmSoundboard.wgtngmSoundboardInstance.close();
+      return;
+    }
+
+    let savedDimensions = game.settings.get("wgtgm-mini-player", "sbSheetDimensions");
+    game.wgtngmSoundboard.wgtngmSoundboardInstance = new wgtngmSoundboardSheet({ 
+        position: { 
+            width: savedDimensions?.width || 240,
+            height: savedDimensions?.height || 320,
+            left: savedDimensions?.left || 40,
+            top: savedDimensions?.top || 40
+        } 
+    });
+    game.wgtngmSoundboard.wgtngmSoundboardInstance.render(true);
+}
+
+
+export function checkAndRender(playlist){
+    if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.rendered && playlist.mode !== CONST.PLAYLIST_MODES.DISABLED) {
+        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.syncState();
+        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render();
+    }
+    if (game.wgtngmSoundboard.wgtngmSoundboardInstance?.rendered && playlist.mode === CONST.PLAYLIST_MODES.DISABLED) {
+        game.wgtngmSoundboard.wgtngmSoundboardInstance.render();
+    }
+}
 

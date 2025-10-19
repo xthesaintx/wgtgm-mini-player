@@ -1,14 +1,12 @@
 <section class="wgtngm-mini-player">
     <div class="wgtngm-drawer-container">
-        <div class="wgtngm-drawer-handle">
-            <i class="fas fa-caret-down"></i>
-        </div>
+        <i class="fas fa-caret-down wgtngm-drawer-handle" data-action="open-playlists"></i>
         <div class="wgtngm-drawer-content">
             <div class="form-group">
                 <label for="playlist-select">Playlist:</label>
                 <select name="playlist-select" id="playlist-select">
                     {{#each playlists}}
-                    <option value="{{this.id}}">{{#if this.playing}}&#9658;{{/if}} {{this.name}}</option>
+                    <option value="{{this.id}}">{{#if this.playing}}&#9658;{{/if}}{{this.playing}} {{this.name}}</option>
                     {{/each}}
                 </select>
             </div>
@@ -36,6 +34,7 @@
             <button data-action="toggle-play-pause" title="Play/Pause"><i class="fas fa-play"></i></button>
             <button class="wgtngm-stop-track" data-action="stop-track" title="Stop"><i class="fas fa-stop"></i></button>
             <button data-action="next-track" title="Next Track"><i class="fas fa-forward"></i></button>
+            <button data-action="open-soundboard" title="Open Soundboard"><i class="fas fa-border-all"></i></button>
         </div>
 
         <div class="wgtngm-playback-bar">
