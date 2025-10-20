@@ -1,3 +1,6 @@
+## 1.2
+- Added importing of music to playlists from a directory
+
 ## 1.1
 - Added Soundboard
 
