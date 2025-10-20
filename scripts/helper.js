@@ -142,13 +142,12 @@ export function openwgtngmMiniPlayerSheet() {
         "wgtgm-mini-player",
         "mpSheetDimensions",
     );
-    const height = savedDimensions?.height || 190;
     game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance = new wgtngmMiniPlayerSheet({
         position: {
-            width: savedDimensions?.width || 320,
-            height: height,
-            left: savedDimensions?.left || 20,
-            top: savedDimensions?.top || window.innerHeight - height - 20,
+            width: savedDimensions?.width ?? 240,
+            height: savedDimensions?.height ?? 190,
+            left: savedDimensions?.left ?? 40,
+            top: savedDimensions?.top ?? 40
         },
     });
     game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render(true);
@@ -164,10 +163,10 @@ export function openwgtngmSoundboardSheet() {
     let savedDimensions = game.settings.get("wgtgm-mini-player", "sbSheetDimensions");
     game.wgtngmSoundboard.wgtngmSoundboardInstance = new wgtngmSoundboardSheet({ 
         position: { 
-            width: savedDimensions?.width || 240,
-            height: savedDimensions?.height || 320,
-            left: savedDimensions?.left || 40,
-            top: savedDimensions?.top || 40
+            width: savedDimensions?.width ?? 240,
+            height: savedDimensions?.height ?? 320,
+            left: savedDimensions?.left ?? 40,
+            top: savedDimensions?.top ?? 40
         } 
     });
     game.wgtngmSoundboard.wgtngmSoundboardInstance.render(true);

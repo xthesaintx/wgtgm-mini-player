@@ -24,13 +24,13 @@ export default async function miniplayerSettings() {
         scope: "client",
         config: false,  
         type: Object,
-        default: { width: 400, height: 200 } 
+        default: { width: 400, height: 200, top:40 , left:40} 
     });
     game.settings.register("wgtgm-mini-player", "sbSheetDimensions", {
         scope: "client",
         config: false,  
         type: Object,
-        default: { width: 400, height: 200 } 
+        default: { width: 400, height: 200,top:40 , left:40 } 
     });
 
     game.settings.register("wgtgm-mini-player", "remember-open-state", {
@@ -44,7 +44,7 @@ export default async function miniplayerSettings() {
 
     game.settings.register("wgtgm-mini-player", "music-folder", {
         name: "Base music folder",
-        hint: "Folder where playlists are created from, folders with '-sfx' will be added as Soundboard Only",
+        hint: "Folder where playlists are created from, folders with [sfx] will be added as Soundboard Only",
         scope: "world",
         config: true,
         type: String,
@@ -75,7 +75,7 @@ export default async function miniplayerSettings() {
         scope: "client",
         config: false,  
         type: Boolean,
-        default: false // Default to closed
+        default: false
     });
 
     game.settings.register("wgtgm-mini-player", "mpSbOpened", {
@@ -103,7 +103,7 @@ export default async function miniplayerSettings() {
 
     game.keybindings.register("wgtgm-mini-player", "MiniPlayer", {
       name: "Open the Mini Music Player",
-      uneditable: [
+      editable: [
         {key: "KeyM", modifiers: [foundry.helpers.interaction.KeyboardManager.MODIFIER_KEYS.CONTROL]}
       ],
       onDown: () => {openwgtngmMiniPlayerSheet();}
@@ -111,7 +111,7 @@ export default async function miniplayerSettings() {
 
     game.keybindings.register("wgtgm-mini-player", "MiniBoard", {
       name: "Open the Mini Soundboard",
-      uneditable: [
+      editable: [
         {key: "KeyM", modifiers: [foundry.helpers.interaction.KeyboardManager.MODIFIER_KEYS.CONTROL, foundry.helpers.interaction.KeyboardManager.MODIFIER_KEYS.ALT]}
       ],
       onDown: () => {openwgtngmSoundboardSheet();}

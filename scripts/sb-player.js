@@ -186,7 +186,6 @@ async _onSoundClick(event, target) {
     const soundId = event.target.dataset.soundId;
 
     const playlist = game.playlists.get(this.#currentPlaylistId);
-    console.log(this.#currentPlaylistId)
     const sound = playlist?.sounds.get(soundId);
     if (!sound) return;
 
@@ -280,7 +279,6 @@ static #onMuteAll(event) {
             }
         }
     } else {
-        // Mute all playing sounds and save their current volume
         for (const sound of playlist.sounds) {
             if (sound.playing) {
                 sound.setFlag("wgtgm-mini-player", "volume", sound.volume);

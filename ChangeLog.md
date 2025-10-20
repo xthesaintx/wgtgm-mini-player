@@ -1,7 +1,11 @@
+## 1.5
+- moved all of Mini Player to handlebars
+- fixed short cut options
+
 ## 1.2
 - Added importing of music to playlists from a directory
 
-## 1.1
+## 0.8
 - Added Soundboard
 
 ## 0.5

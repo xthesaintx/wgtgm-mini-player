@@ -100,9 +100,15 @@ export class PlaylistImporter {
             ui.notifications.info(
                 "Mini Player: Playlist import/update complete!",
             );
+            if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.rendered)
+            {
                 game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.syncState();
-                game.wgtngmSoundboard.wgtngmSoundboardInstance.render();
                 game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render();
+            }
+            if (game.wgtngmSoundboard.wgtngmSoundboardInstance?.rendered)
+            {
+             game.wgtngmSoundboard.wgtngmSoundboardInstance.render();
+            }
         } catch (err) {
             console.error(err);
             ui.notifications.error(
