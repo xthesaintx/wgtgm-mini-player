@@ -4,7 +4,7 @@ import {
     openwgtngmMiniPlayerSheet,
     openwgtngmSoundboardSheet
 } from "./helper.js";
-export const MODULE_NAME = "wgtngmMiniPlayer";
+export const MODULE_NAME = "wgtgm-mini-player";
 
 export default async function miniplayerSettings() {
     
@@ -41,6 +41,35 @@ export default async function miniplayerSettings() {
         type: Boolean,
         default: true
     });
+
+    game.settings.register("wgtgm-mini-player", "music-folder", {
+        name: "Base music folder",
+        hint: "Folder where playlists are created from, folders with '-sfx' will be added as Soundboard Only",
+        scope: "world",
+        config: true,
+        type: String,
+        default: "",
+        filePicker: "folder",
+    });
+ 
+    game.settings.register("wgtgm-mini-player", "set-to-loop", {
+        name: "Set Soundboard Playlist tracks to loop",
+        hint: "Imported tracks in Soundboard Only playlists will be set to loop",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: true,
+    });
+
+    game.settings.register("wgtgm-mini-player", "set-to-environment", {
+        name: "Set Soundboard Playlist channel to Environment",
+        hint: "Imported Soundboard Only playlists will be set to the Environment channel",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: true,
+    });
+ 
 
     game.settings.register("wgtgm-mini-player", "mpDrawerOpen", {
         scope: "client",

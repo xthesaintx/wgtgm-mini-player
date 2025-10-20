@@ -8,7 +8,7 @@ import {
     checkAndRender,
     openIfOpened
 } from "./helper.js";
-
+import { PlaylistImporter } from "./importer.js";
 import { wgtngmMiniPlayerSheet } from "./mp-player.js";
 import { wgtngmSoundboardSheet } from "./sb-player.js";
 Hooks.once("init", async function () {
@@ -27,6 +27,7 @@ Hooks.once("ready", async function () {
     game.wgtngmMiniPlayer = new wgtngmMiniPlayerSheet();
     game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance = null;
     game.wgtngmSoundboard = new wgtngmSoundboardSheet();
+    game.wgtngmMiniPlayer.importer = new PlaylistImporter();
     game.wgtngmSoundboard.wgtngmSoundboardInstance = null;    
     if (game.user.isGM) {
         if (game.settings.get("wgtgm-mini-player", "runonlyonce") === false) {

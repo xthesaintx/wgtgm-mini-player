@@ -6,10 +6,10 @@ import { MODULE_NAME } from "./settings.js";
 import { wgtngmMiniPlayerSheet } from "./mp-player.js";
 import { wgtngmSoundboardSheet } from "./sb-player.js";
 
-export const localize = (key) => game.i18n.localize(`wgtngmMiniPlayer.${key}`);
+export const localize = (key) => game.i18n.localize(`${MODULE_NAME}.${key}`);
 
 export const format = (key, data) =>
-    game.i18n.format(`wgtngmMiniPlayer.${key}`, data);
+    game.i18n.format(`${MODULE_NAME}.${key}`, data);
 
 export const renderTemplate = foundry.applications.handlebars.renderTemplate;
 
@@ -28,6 +28,12 @@ export const getButtonGrouphead = () => `
         </button>
         <button class="mp-soundboard-open" type="button" title=" Soundboard" data-action="openSB" >
             <i class="fas fa-border-all"></i> Soundboard
+        </button>
+    <button class="mp-update-playlists" type="button" title=" Add Playlists" data-action="updatePlaylists" >
+            <i class="fas fa-list"></i> Add Playlists
+        </button>
+    <button class="mp-remove-playlists" type="button" title=" Remove Playlists" data-action="removePlaylists" >
+            <i class="fas fa-trash"></i> Remove Playlists
         </button>
     </div>
 `;
@@ -73,6 +79,12 @@ export function handleMPClick(event) {
     }
 }
 
+export async function removePlaylists(){
+    const proceed = await confirmationDialog("Are you sure you want to remove all the imported playlists?");
+    if (proceed){
+    };
+  }
+
 export function addplaylistDirectoryUI(html) {
     const nativeHtml = html instanceof jQuery ? html[0] : html;
     if (!game.user.isGM) return;
@@ -89,9 +101,22 @@ export function addplaylistDirectoryUI(html) {
         });
 
     nativeHtml
+        .querySelector(".mp-update-playlists")
+        ?.addEventListener("click", async () => {
+            game.wgtngmMiniPlayer.importer.importFromDirectory();
+        });
+
+    nativeHtml
+        .querySelector(".mp-remove-playlists")
+        ?.addEventListener("click", async () => {
+            game.wgtngmMiniPlayer.importer.removeImportedPlaylists();
+        });
+
+
+    nativeHtml
         .querySelector(".mp-soundboard-open")
         ?.addEventListener("click", async () => {
-            openwgtngmSoundboardSheet();
+            game.wgtngmMiniPlayer.importer.openwgtngmSoundboardSheet();
         });
 
 
