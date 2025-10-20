@@ -8,7 +8,7 @@ Mini Player is a compact and intuitive audio player for Foundry VTT. It provides
 - Persistent window size and position.
 
 ## YouTube Overview
-[![Mini Player Video Overview](https://img.youtube.com/vi/7VqU8gyq8Oc/0.jpg)](https://youtu.be/7VqU8gyq8Oc?si=q1KFPZVy2fGuqIn8)
+[![Mini Player Video Overview](https://img.youtube.com/vi/Zu7IFgPcaGc/0.jpg)](https://youtu.be/Zu7IFgPcaGc)
 
 Discord: https://discord.gg/fycwH79s2y
 
