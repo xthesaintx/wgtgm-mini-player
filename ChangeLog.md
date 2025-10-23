@@ -1,3 +1,6 @@
+## 1.6
+- Fixed track order of Soundboard
+
 ## 1.5
 - moved all of Mini Player to handlebars
 - fixed short cut options

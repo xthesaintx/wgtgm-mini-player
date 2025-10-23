@@ -59,7 +59,10 @@ export class wgtngmSoundboardSheet extends wgtngmsb {
         context.playlists = playlists.map(p => ({ id: p.id, name: p.name, playing: p.playing }));
         const currentPlaylist = playlists.find(p => p.id === this.#currentPlaylistId);
         if (currentPlaylist) {
-            context.sounds = currentPlaylist.sounds.map(sound => {
+            context.sounds = currentPlaylist.playbackOrder.map(soundId => { 
+                const sound = currentPlaylist.sounds.get(soundId); 
+                                if (!sound) return null; 
+
                 const image = sound.getFlag("wgtgm-mini-player", "image") || "";
                 return {
                     id: sound.id,
@@ -67,11 +70,10 @@ export class wgtngmSoundboardSheet extends wgtngmsb {
                     playing: sound.playing,
                     image: image && image !== "" ? image : null,
                 };
-            });
+            }).filter(Boolean); 
         } else {
             context.sounds = [];
         }
-
         context.isMuted = this.#isMuted;
         context.isGM = this.#isGM;
         context.showEnvironmentOnly = this.#showEnvironmentOnly;
