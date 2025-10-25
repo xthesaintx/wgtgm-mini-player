@@ -116,7 +116,7 @@ export function addplaylistDirectoryUI(html) {
     nativeHtml
         .querySelector(".mp-soundboard-open")
         ?.addEventListener("click", async () => {
-            game.wgtngmMiniPlayer.importer.openwgtngmSoundboardSheet();
+            openwgtngmSoundboardSheet();
         });
 
 

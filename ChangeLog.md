@@ -1,3 +1,6 @@
+## 1.7
+- Fixed opening of soundboard from panel
+
 ## 1.6
 - Fixed track order of Soundboard
 
