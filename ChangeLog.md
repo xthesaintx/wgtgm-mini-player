@@ -1,3 +1,8 @@
+## 1.9
+- Settings: Added set music tracks to loop on playlist import
+- Settings: Added play on track select
+- Added Favorites button on player that will toggle the favorite status of a track (adding and removing from a favorites playlist)
+
 ## 1.7
 - Fixed opening of soundboard from panel
 

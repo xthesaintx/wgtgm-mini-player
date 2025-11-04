@@ -17,7 +17,7 @@
                 <select name="track-select" id="track-select">
                     {{#each tracks}}
                     <option value="{{this.id}}" {{#if this.isSelected}}selected{{/if}}>
-                        {{#if this.playing}}&#9658;{{/if}} {{this.name}} {{#if this.isMuted}} &#128263;{{/if}}{{#if this.repeat}} &#128257;{{/if}}
+                        {{#if this.playing}}&#9658;{{/if}} {{this.name}} {{#if this.isMuted}} &#128263;{{/if}}{{#if this.repeat}} &#128257;{{/if}}{{#if this.isFavorite}} &#11088;{{/if}}
                     </option>
                     {{else}}
                     <option value="">--Select a Track--</option>
@@ -30,6 +30,7 @@
     <div class="wgtngm-player-body">
         <div class="wgtngm-main-bar">
             <div class="wgtngm-now-playing">
+                <i class="{{#if isFavorite}}fas fa-star{{else}}far fa-star{{/if}} wgtngm-favorite " data-action="wgtngm-favorite" title="Loop"> </i>
                 <span class="wgtngm-track-name">{{nowPlaying}}</span>
             </div>
             <div class="wgtngm-time-display">

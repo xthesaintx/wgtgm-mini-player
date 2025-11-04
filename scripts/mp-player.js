@@ -29,6 +29,7 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
             "open-soundboard": this.#openSoundboard,
             "open-playlists": this.#openPlaylists,
             "wgtngm-loop": this.#setLoop,
+            "wgtngm-favorite": this.#setFavorite,
 
         },
     };
@@ -64,6 +65,8 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
     }
 
     async _prepareContext(options) {
+        const favoritePlaylistName = "favorites-miniPlayer";
+        const favoritesPlaylist = game.playlists.find(p => p.name === favoritePlaylistName);
         const filteredPlaylists = this.#getFilteredPlaylists();    
         if (this.#currentPlaylist && filteredPlaylists.some((p) => p.id === this.#currentPlaylist.id)) {
             if (!this.#currentTrack || !this.#currentPlaylist.sounds.has(this.#currentTrack?.id)) {
@@ -96,6 +99,8 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         if (this.#currentPlaylist && !this.#currentTrack) {
              this.#currentTrack = this.#currentPlaylist.playbackOrder.map(id => this.#currentPlaylist.sounds.get(id))[0] ?? null;
         }
+
+
         const context = await super._prepareContext(options);
         context.playlists = filteredPlaylists.map(p => ({
             id: p.id,
@@ -104,6 +109,9 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
             isSelected: p.id === this.#currentPlaylist?.id
         }));
 
+        const favoritePaths = new Set(
+            favoritesPlaylist ? favoritesPlaylist.sounds.map(s => s.path) : []
+        );
         let tracks = [];
         if (this.#currentPlaylist) {
             tracks = this.#currentPlaylist.playbackOrder
@@ -116,7 +124,8 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
                     volume: s.volume,
                     isMuted: s.volume === 0,
                     playing: s.playing,
-                    isSelected: s.id === this.#currentTrack?.id
+                    isSelected: s.id === this.#currentTrack?.id,
+                    isFavorite: favoritePaths.has(s.path)
                 }));
         }
         context.tracks = tracks;
@@ -147,6 +156,14 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         if (!this.#isMuted && volume > 0) {
             this.#previousVolume = volume;
         }
+
+        let isFavorite = false;
+        const soundPath = this.#currentTrack?.path; 
+
+        if (favoritesPlaylist && soundPath) {
+            isFavorite = favoritesPlaylist.sounds.some(s => s.path === soundPath);
+        }
+        context.isFavorite = isFavorite;
         context.isDrawerOpen = game.settings.get("wgtgm-mini-player", "mpDrawerOpen");
         return context;
     }
@@ -260,8 +277,11 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
                 }
             }
         } 
-        await this.#currentPlaylist.playSound(this.#currentTrack);
-
+        if (game.settings.get("wgtgm-mini-player", "play-on-select")) {
+            await this.#currentPlaylist.playSound(this.#currentTrack);
+        } else {
+            this.render();
+        }
     }
 
     static async #onTogglePlayPause(event) {
@@ -298,7 +318,63 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         if (!targetSound.repeat){drawer.classList.remove("open");}
         else{
         drawer.classList.add("open");}
+        this.render();
     }
+
+    static async #setFavorite(event){
+            const targetSound =
+                this.#currentTrack ??
+                game.playlists.playing.find((p) => p.sounds.some((s) => s.playing))?.sounds.find((s) => s.playing);
+                
+            if (!targetSound) {
+                 ui.notifications.warn("No track selected to favorite.");
+                 return;
+            }
+            
+            const favoritePlaylistName = "favorites-miniPlayer";
+            let favoritesPlaylist = game.playlists.find(p => p.name === favoritePlaylistName);
+
+            if (!favoritesPlaylist) {
+                try {
+                    favoritesPlaylist = await Playlist.create({
+                        name: favoritePlaylistName,
+                        mode: CONST.PLAYLIST_MODES.SEQUENTIAL,
+                    });
+                     ui.notifications.info(`Created playlist: ${favoritePlaylistName}`);
+                } catch (err) {
+                    console.error("Mini Player | Failed to create favorites playlist", err);
+                    ui.notifications.error("Failed to create favorites playlist.");
+                    return;
+                }
+            }
+
+            // Check if track is already a favorite (by path)
+            const existingSound = favoritesPlaylist.sounds.find(s => s.path === targetSound.path);
+
+            try {
+                if (existingSound) {
+                    // Remove from favorites
+                    await favoritesPlaylist.deleteEmbeddedDocuments("PlaylistSound", [existingSound.id]);
+                    ui.notifications.info(`Removed "${targetSound.name}" from favorites.`);
+                } else {
+                    // Add to favorites
+                    const soundData = {
+                        name: targetSound.name,
+                        path: targetSound.path,
+                        repeat: false, // Favorites probably shouldn't loop by default
+                        volume: targetSound.volume,
+                        flags: { ...targetSound.flags } // Preserve flags
+                    };
+                    await favoritesPlaylist.createEmbeddedDocuments("PlaylistSound", [soundData]);
+                    ui.notifications.info(`Added "${targetSound.name}" to favorites.`);
+                }
+            } catch (err) {
+                 console.error("Mini Player | Failed to update favorites playlist", err);
+                 ui.notifications.error("Failed to update favorites playlist.");
+            }
+            
+            this.render();
+        }
 
     static async #onStopTrack(event) {
         if (this.#currentTrack && this.#currentPlaylist) {

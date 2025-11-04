@@ -283,6 +283,11 @@ body.theme-light .wgtngmSoundboard .sound-button.playing
     border: none;
 }
 
+.wgtngmMiniPlayer .wgtngm-favorite{
+    border: none;
+    cursor: pointer;
+}
+
 .wgtngmMiniPlayer .wgtngm-loop{
     color: var(--color-level-error);
     border: none;

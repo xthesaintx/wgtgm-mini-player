@@ -210,7 +210,7 @@ export class PlaylistImporter {
     async _addOrUpdateSounds(playlist, validAudioFiles) {
         const isSfx = playlist.name.toLowerCase().endsWith("-sfx");
         const shouldLoop =
-            isSfx && game.settings.get(MODULE_NAME, "set-to-loop");
+            (isSfx && game.settings.get(MODULE_NAME, "set-to-loop")) || (!isSfx && game.settings.get(MODULE_NAME, "set-music-to-loop"));
         const existingPaths = new Set(playlist.sounds.map((s) => s.path));
         const newSoundsData = [];
         for (const path of validAudioFiles) {

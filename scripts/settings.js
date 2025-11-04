@@ -70,6 +70,23 @@ export default async function miniplayerSettings() {
         default: true,
     });
  
+    game.settings.register("wgtgm-mini-player", "set-music-to-loop", {
+        name: "Set Music Playlist tracks to loop",
+        hint: "Imported tracks in Music playlists will be set to loop",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: true,
+    });
+
+    game.settings.register("wgtgm-mini-player", "play-on-select", {
+        name: "Play on Track Select",
+        hint: "Automatically play a track when it is selected from the dropdown list.",
+        scope: "client",
+        config: true,
+        type: Boolean,
+        default: true, 
+    });
 
     game.settings.register("wgtgm-mini-player", "mpDrawerOpen", {
         scope: "client",
