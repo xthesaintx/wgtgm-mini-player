@@ -61,7 +61,7 @@ export default async function miniplayerSettings() {
     });
 
     game.settings.register("wgtgm-mini-player", "crossfade",{
-        name: "Crossfade duraction (seconds)",
+        name: "Crossfade duration (seconds)",
         hint: "Set the length of crossfade between tracks in seconds",
         scope: "world",
         config: true,
