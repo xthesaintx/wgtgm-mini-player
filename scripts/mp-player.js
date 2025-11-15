@@ -28,6 +28,7 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
             "previous-track": this.#onPreviousTrack,
             "open-soundboard": this.#openSoundboard,
             "open-playlists": this.#openPlaylists,
+            "fadeSounds": this.#fadeSoundsToggle,
             "wgtngm-loop": this.#setLoop,
             "wgtngm-favorite": this.#setFavorite,
 
@@ -37,6 +38,7 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
     #currentPlaylist = null;
     #currentTrack = null;
     #isMuted = false;
+    #isFade = game.settings.get("wgtgm-mini-player", "enable-crossfade");
     #previousVolume = 0.5;
     #timestampInterval = null;
 
@@ -138,6 +140,11 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         context.isPlaying = this.#currentTrack?.playing ?? false;
         context.isLooping = this.#currentTrack?.repeat ?? false;
 
+        for (const p of filteredPlaylists) {
+            p.update({ fade: this.#crossFadeLength() });
+        }
+
+
         let volume = 0.5;
         if (sound) {
             volume = sound.volume; // Get the track's *actual* current volume
@@ -163,6 +170,7 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         if (favoritesPlaylist && soundPath) {
             isFavorite = favoritesPlaylist.sounds.some(s => s.path === soundPath);
         }
+        context.isFade = this.#isFade;
         context.isFavorite = isFavorite;
         context.isDrawerOpen = game.settings.get("wgtgm-mini-player", "mpDrawerOpen");
         return context;
@@ -238,6 +246,17 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         return game.playlists.filter((p) => p.mode !== CONST.PLAYLIST_MODES.DISABLED && p.sounds.size > 0);
     }
 
+    static #fadeSoundsToggle(event, target) {
+        const currentIsFade = game.settings.get("wgtgm-mini-player", "enable-crossfade");
+        this.#isFade = !currentIsFade;
+        game.settings.set("wgtgm-mini-player", "enable-crossfade", this.#isFade);
+        target.classList.toggle('fade', this.#isFade);
+        const filteredPlaylists = this.#getFilteredPlaylists();
+        for (const p of filteredPlaylists) {
+            p.update({ fade: this.#crossFadeLength() });
+        }
+
+    }
 
     static #openPlaylists(event) {
         const drawer = event.target.parentElement;
@@ -254,13 +273,19 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         this.#currentPlaylist = newPlaylist;
         this.#currentTrack = this.#currentPlaylist?.playbackOrder.map(id => this.#currentPlaylist.sounds.get(id))[0] ?? null;
         const playingSound = newPlaylist.playing ? newPlaylist.sounds.find(s => s.playing) : null;
-    
-        if (playingSound) {
+            if (playingSound) {
             this.#currentTrack = playingSound;
         } else {
             this.#currentTrack = this.#currentPlaylist?.playbackOrder.map(id => this.#currentPlaylist.sounds.get(id))[0] ?? null;
         }
         this.render();
+    }
+
+    #crossFadeLength(){
+        const CrossfadeEnabled = game.settings.get("wgtgm-mini-player", "enable-crossfade");
+        const crossfadeBaseDuration = game.settings.get("wgtgm-mini-player", "crossfade") * 1000;
+        const finalCrossfadeDuration = CrossfadeEnabled ? crossfadeBaseDuration : 1;
+        return finalCrossfadeDuration;
     }
 
     async _onTrackSelect(event) {
@@ -270,7 +295,7 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         if (!newTrack) return;
         this.#currentTrack = newTrack;
         const filteredPlaylists = this.#getFilteredPlaylists();
-        if (game.settings.get("wgtgm-mini-player", "stop-on-new-playlist")) {
+        if (game.settings.get("wgtgm-mini-player", "stop-on-new-playlist") && game.settings.get("wgtgm-mini-player", "play-on-select")) {
             for (const p of filteredPlaylists) {
                 if (p.id !== this.#currentPlaylist.id && p.playing) {
                     await p.stopAll();
@@ -286,10 +311,8 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
 
     static async #onTogglePlayPause(event) {
         if (!this.#currentPlaylist || !this.#currentTrack) return;
-
         const playlist = game.playlists.get(this.#currentPlaylist.id);
         const sound = playlist?.sounds.get(this.#currentTrack.id);
-
         if (sound.playing) {
             const ct = sound.sound.currentTime;
             await sound.update({ playing: false, pausedTime: ct });
@@ -347,6 +370,7 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
                     return;
                 }
             }
+
 
             // Check if track is already a favorite (by path)
             const existingSound = favoritesPlaylist.sounds.find(s => s.path === targetSound.path);

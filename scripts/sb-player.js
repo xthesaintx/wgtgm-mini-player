@@ -23,6 +23,8 @@ export class wgtngmSoundboardSheet extends wgtngmsb {
             "toggle-resize": this.#onToggleResize,
             "toggle-filter": this.#onToggleFilter,
             "mute-all": this.#onMuteAll,
+            "fadeSounds": this.#fadeSoundsToggle,
+            "multiSounds": this.#multiSoundsToggle,
             "sb-click":{
                 handler: this.#sbClick,
                 buttons: [0,2]
@@ -31,9 +33,12 @@ export class wgtngmSoundboardSheet extends wgtngmsb {
     };
 
     #currentPlaylistId = null;
+    #playlists = null;
     #showEnvironmentOnly = false;
     #resizeAuto = true;
     #isMuted = false;
+    #isFade = game.settings.get("wgtgm-mini-player", "enable-sb-crossfade");
+    #isNotMulti = game.settings.get("wgtgm-mini-player", "stop-on-new-soundboard");
     #isSnapping = true;
     #isGM = game.user.isGM;
     static PARTS = {
@@ -44,12 +49,15 @@ export class wgtngmSoundboardSheet extends wgtngmsb {
 
     async _prepareContext(options) {
         const context = await super._prepareContext(options);
-
+        context.isNotMulti = this.#isNotMulti;
+        context.isFade = this.#isFade;
         let playlists = game.playlists.filter(p => p.mode === CONST.PLAYLIST_MODES.DISABLED);
         playlists = playlists.filter(p => p.sounds.size > 0);
         if (this.#showEnvironmentOnly) {
             playlists = playlists.filter(p => p.channel === "environment");
         }
+        
+        this.#playlists = playlists;
         if (this.#currentPlaylistId && !playlists.some(p => p.id === this.#currentPlaylistId)) {
             this.#currentPlaylistId = null;
         }
@@ -57,11 +65,20 @@ export class wgtngmSoundboardSheet extends wgtngmsb {
             this.#currentPlaylistId = playlists[0].id;
         }
         context.playlists = playlists.map(p => ({ id: p.id, name: p.name, playing: p.playing }));
+
+        const sbCrossfadeEnabled = game.settings.get("wgtgm-mini-player", "enable-sb-crossfade");
+        const crossfadeBaseDuration = game.settings.get("wgtgm-mini-player", "crossfade") * 1000;
+        const finalCrossfadeDuration = sbCrossfadeEnabled ? crossfadeBaseDuration : 1;
+        for (const p of this.#playlists) {
+              await p.update({ fade: finalCrossfadeDuration });
+        }
+
+
         const currentPlaylist = playlists.find(p => p.id === this.#currentPlaylistId);
         if (currentPlaylist) {
             context.sounds = currentPlaylist.playbackOrder.map(soundId => { 
                 const sound = currentPlaylist.sounds.get(soundId); 
-                                if (!sound) return null; 
+                if (!sound) return null; 
 
                 const image = sound.getFlag("wgtgm-mini-player", "image") || "";
                 return {
@@ -187,16 +204,32 @@ async _onSoundClick(event, target) {
     if (!event.target.dataset.soundId) return;
     const soundId = event.target.dataset.soundId;
 
+    // const sbCrossfadeEnabled = game.settings.get("wgtgm-mini-player", "enable-sb-crossfade");
+    // const crossfadeBaseDuration = game.settings.get("wgtgm-mini-player", "crossfade") * 1000;
+    // const finalCrossfadeDuration = sbCrossfadeEnabled ? crossfadeBaseDuration : 1;
+
     const playlist = game.playlists.get(this.#currentPlaylistId);
     const sound = playlist?.sounds.get(soundId);
     if (!sound) return;
 
     if (sound.playing) {
-        await playlist.stopSound(sound);
+        // await playlist.update({ fade: finalCrossfadeDuration });
+        await sound.update({ playing: false });
+        target.classList.remove('playing');
     } else {
-        await playlist.playSound(sound);
+            const playlists = this.#playlists;
+            if (this.#isNotMulti) {
+                const playingAndEnabledPlaylists = playlists.filter((p) => p.playing);
+                for (const p of playingAndEnabledPlaylists) {
+                    // await p.update({ fade: finalCrossfadeDuration });
+                    await p.stopAll();
+                }
+            }
+            // await playlist.update({ fade: finalCrossfadeDuration });
+            await playlist.playSound(sound);
     }
 }
+
 
 _onSoundRightClick(event, target) {
     event.preventDefault();
@@ -205,6 +238,7 @@ _onSoundRightClick(event, target) {
     const playlist = game.playlists.get(this.#currentPlaylistId);
     const sound = playlist?.sounds.get(soundId);
     if (!sound) return;
+
 
     const current = sound.getFlag("wgtgm-mini-player", "image") || "";
     const fp = new foundry.applications.apps.FilePicker.implementation({
@@ -233,10 +267,29 @@ static #sbClick(event, target){
     }
 }
 
-
 static #onToggleResize(event) {
     this.#resizeAuto = !this.#resizeAuto;
     this.render();
+}
+
+static #fadeSoundsToggle(event, target) {
+    const currentIsFade = game.settings.get("wgtgm-mini-player", "enable-sb-crossfade");
+    this.#isFade = !currentIsFade;
+    game.settings.set("wgtgm-mini-player", "enable-sb-crossfade", this.#isFade);
+    target.classList.toggle('fade', this.#isFade);
+    const sbCrossfadeEnabled = game.settings.get("wgtgm-mini-player", "enable-sb-crossfade");
+    const crossfadeBaseDuration = game.settings.get("wgtgm-mini-player", "crossfade") * 1000;
+    const finalCrossfadeDuration = sbCrossfadeEnabled ? crossfadeBaseDuration : 1;
+    for (const p of this.#playlists) {
+            p.update({ fade: finalCrossfadeDuration });
+    }
+}
+
+static #multiSoundsToggle(event, target) {
+    const currentMulti = game.settings.get("wgtgm-mini-player", "stop-on-new-soundboard");
+    this.#isNotMulti = !currentMulti;
+    game.settings.set("wgtgm-mini-player", "stop-on-new-soundboard", this.#isNotMulti);
+    target.classList.toggle('nomulti', this.#isNotMulti);
 }
 
 static #onToggleFilter(event) {
@@ -256,12 +309,8 @@ static async #onRemoveImage(event){
     this.render()
   }
 
-// static #onRemoveImage(event){
-//     this.document.setFlag("wgtgm-mini-player", "image", null);
-//     this.render()
-//   }
 
-static #onMuteAll(event) {
+static #onMuteAll(event,target) {
     console.log(this.#isMuted);
     const playlist = game.playlists.get(this.#currentPlaylistId);
     if (!playlist) return;
@@ -269,10 +318,8 @@ static #onMuteAll(event) {
     if (this.#isMuted) {
         for (const sound of playlist.sounds) {
             if (sound.playing) {
-                // Restore the volume from the flag, defaulting to 0.5
                 let previousVolume = sound?.getFlag("wgtgm-mini-player", "volume") || 0.5;
 
-                // If the stored volume was 0 for some reason, restore to 0.5 anyway
                 if (previousVolume === 0) {
                     previousVolume = 0.5;
                 }
@@ -288,9 +335,12 @@ static #onMuteAll(event) {
             }
         }
     }
-
     this.#isMuted = !this.#isMuted;
-    this.render();
+    // {{else}}
+    target.classList.toggle('fa-volume-mute', this.#isMuted);
+    target.classList.toggle('fa-volume-high', !this.#isMuted);
+
+    // this.render();
 }
 
 }

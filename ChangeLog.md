@@ -1,3 +1,8 @@
+## 2.0
+- Fixed bug when stop on track selected was on and play on select was off would stop track
+- Crossfade for soundboard and music player
+- multi track enable disable for soundboard
+
 ## 1.9
 - Settings: Added set music tracks to loop on playlist import
 - Settings: Added play on track select

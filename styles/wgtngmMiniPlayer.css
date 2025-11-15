@@ -238,7 +238,9 @@ body.theme-light .wgtngmSoundboard .sound-button.playing
     height: 24px;
 }
 
-
+.wgtngmSoundboard .soundboard-header i{
+    cursor: pointer;
+}
 .wgtngmSoundboard .soundboard-header button,
 .wgtngmSoundboard .soundboard-header button.active{
     width: 28px;
@@ -306,6 +308,22 @@ body.theme-light .wgtngmSoundboard .sound-button.playing
     width: -webkit-fill-available;
 }
 
+.wgtngmMiniPlayer i.wgtngm-fade.fade,
+.wgtngmSoundboard i.wgtngm-fade.fade,
+.wgtngmSoundboard i.wgtngm-multi{
+    border: none;
+    color: var(--color-level-success);
+    cursor: pointer;
+
+}
+
+.wgtngmMiniPlayer i.wgtngm-fade,
+.wgtngmSoundboard i.wgtngm-fade,
+.wgtngmSoundboard i.wgtngm-multi.nomulti{
+    color: var(--color-level-error);
+    border: none;
+    cursor: pointer;
+}
 
 .wgtngmSoundboard .sound-button span {
     position: absolute;

@@ -42,6 +42,34 @@ export default async function miniplayerSettings() {
         default: true
     });
 
+    game.settings.register("wgtgm-mini-player", "enable-crossfade", {
+        name: "Enable crossfade",
+        hint: "If enabled crossfade will be applied to music playlists",
+        scope: "client",
+        config: true,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register("wgtgm-mini-player", "enable-sb-crossfade", {
+        name: "Enable crossfade on Soundboard",
+        hint: "If enabled crossfade will be applied to soundboard playlists",
+        scope: "client",
+        config: true,
+        type: Boolean,
+        default: false
+    });
+
+    game.settings.register("wgtgm-mini-player", "crossfade",{
+        name: "Crossfade duraction (seconds)",
+        hint: "Set the length of crossfade between tracks in seconds",
+        scope: "world",
+        config: true,
+        requiresReload: false,
+        type: new foundry.data.fields.NumberField({nullable: false, min: 0.5, max: 10, step: 0.5}),
+        default: 2,
+    });
+
     game.settings.register("wgtgm-mini-player", "music-folder", {
         name: "Base music folder",
         hint: "Folder where playlists are created from, folders with [sfx] will be added as Soundboard Only",
@@ -100,6 +128,15 @@ export default async function miniplayerSettings() {
         config: false,  
         type: Object,
         default: { mp: false, sb: false } 
+    });
+
+    game.settings.register("wgtgm-mini-player", "stop-on-new-soundboard", {
+        name: "Stop on new Sound",
+        hint: "Stop playback of the soundboard track when a new Soundboad sound is played.",
+        scope: "client",
+        config: true,
+        type: Boolean,
+        default: false
     });
 
     game.settings.register("wgtgm-mini-player", "stop-on-new-playlist", {

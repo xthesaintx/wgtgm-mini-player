@@ -1,4 +1,5 @@
 <div class="wgtngm-soundboard">
+
     <div class="soundboard-header">
         <button data-action="toggle-resize" class="wgtngm-resize-toggle {{#if resizeAuto}}active{{/if}}" title="Toggle Automatic Resizing">
             <i class={{#if resizeAuto}}"fas fa-maximize"{{else}}"fas fa-expand"{{/if}}></i>
@@ -13,9 +14,9 @@
             </option>
             {{/each}}
         </select>
-        <button data-action="mute-all" class="{{#if isMuted}}active{{/if}}" title="Mute/Unmute All">
-            <i class="fas {{#if isMuted}}fa-volume-mute{{else}}fa-volume-high{{/if}}"></i>
-        </button>
+            <i class="fas fa-shuffle wgtngm-fade {{#if isFade}}fade{{/if}}" data-action="fadeSounds" title="Crossfade {{#if isFade}}on{{else}}off{{/if}}"></i>
+            <i class="fas fa-layer-group wgtngm-multi {{#if isNotMulti}}nomulti{{/if}}" data-action="multiSounds" title="Multitrack {{#if isNotMulti}}off{{else}}on{{/if}}"></i>
+            <i class="{{#if isMuted}}active{{/if}} fas {{#if isMuted}}fa-volume-mute{{else}}fa-volume-high{{/if}}" data-action="mute-all" title="Mute/Unmute All"></i>
     </div>
     <div class="soundboard-grid">
         {{#each sounds}}
