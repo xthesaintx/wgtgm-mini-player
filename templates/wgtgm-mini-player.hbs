@@ -1,29 +1,54 @@
 <section class="wgtngm-mini-player">
     <div class="wgtngm-drawer-container {{#if isDrawerOpen}}open{{/if}}">
         <i class="fas fa-caret-down wgtngm-drawer-handle" data-action="open-playlists"></i>
-        <div class="wgtngm-drawer-content">
-            <div class="form-group">
-                <label for="playlist-select">Playlist:</label>
-                <select name="playlist-select" id="playlist-select">
-                    {{#each playlists}}
-                    <option value="{{this.id}}" {{#if this.isSelected}}selected{{/if}}>
-                        {{#if this.playing}}&#9658;{{/if}} {{this.name}}
-                    </option>
+<div class="wgtngm-drawer-content">
+            {{#if tagMode}}
+                <div class="tag-cloud">
+                    {{#each tags}}
+                    <button type="button" class="tag-toggle {{this.stateClass}}" data-action="toggle-tag-select" data-tag="{{this.name}}" 
+                            style="">
+                        {{this.name}}
+                    </button>
                     {{/each}}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="track-select">Track:</label>
-                <select name="track-select" id="track-select">
-                    {{#each tracks}}
-                    <option value="{{this.id}}" {{#if this.isSelected}}selected{{/if}}>
-                        {{#if this.playing}}&#9658;{{/if}} {{this.name}} {{#if this.isMuted}} &#128263;{{/if}}{{#if this.repeat}} &#128257;{{/if}}{{#if this.isFavorite}} &#11088;{{/if}}
-                    </option>
-                    {{else}}
-                    <option value="">--Select a Track--</option>
-                    {{/each}}
-                </select>
-            </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="track-select">Results:</label>
+                    <select name="track-select" id="track-select">
+                        {{#each tracks}}
+                        <option value="{{this.id}}" {{#if this.isSelected}}selected{{/if}}>
+                            {{#if this.playing}}&#9658;{{/if}} {{this.name}}
+                        </option>
+                        {{else}}
+                        <option value="">-- No Matches --</option>
+                        {{/each}}
+                    </select>
+                </div>
+            {{else}}
+                <div class="form-group">
+                    <label for="playlist-select">Playlist:</label>
+                    <select name="playlist-select" id="playlist-select">
+                        {{#each playlists}}
+                        <option value="{{this.id}}" {{#if this.isSelected}}selected{{/if}}>
+                            {{#if this.playing}}&#9658;{{/if}} {{this.name}}
+                        </option>
+                        {{/each}}
+                    </select>
+                </div>
+                {{!-- Standard Track Dropdown --}}
+                <div class="form-group">
+                    <label for="track-select">Track:</label>
+                    <select name="track-select" id="track-select">
+                        {{#each tracks}}
+                        <option value="{{this.id}}" {{#if this.isSelected}}selected{{/if}}>
+                            {{#if this.playing}}&#9658;{{/if}} {{this.name}} {{#if this.isMuted}} &#128263;{{/if}}{{#if this.repeat}} &#128257;{{/if}}{{#if this.isFavorite}} &#11088;{{/if}}
+                        </option>
+                        {{else}}
+                        <option value="">--Select a Track--</option>
+                        {{/each}}
+                    </select>
+                </div>
+            {{/if}}
         </div>
     </div>
 
@@ -45,7 +70,6 @@
                 <button data-action="toggle-play-pause" title="Play/Pause"><i class="fas {{#if isPlaying}}fa-pause{{else}}fa-play{{/if}}"></i></button>
                 <button class="wgtngm-stop-track" data-action="stop-track" title="Stop"><i class="fas fa-stop"></i></button>
                 <button data-action="next-track" title="Next Track"><i class="fas fa-forward"></i></button>
-                <button data-action="open-soundboard" title="Open Soundboard"><i class="fas fa-border-all"></i></button>
             </div>
             <div class="wgtngm-playback-bar">
                 <div class="wgtngm-volume-control">

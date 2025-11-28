@@ -1,4 +1,5 @@
 import miniplayerSettings, { MODULE_NAME } from "./settings.js";
+import { TagManager } from "./tags.js"; 
 import {
     handleMPClick,
     localize,
@@ -24,6 +25,7 @@ Hooks.once("i18nInit", async function () {
 
 
 Hooks.once("ready", async function () {
+    game.wgtngmTags = new TagManager();
     game.wgtngmMiniPlayer = new wgtngmMiniPlayerSheet();
     game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance = null;
     game.wgtngmSoundboard = new wgtngmSoundboardSheet();

@@ -1,4 +1,10 @@
 /* All styles are now scoped to the .wgtngmMiniPlayer application window */
+.application.wgtngmMiniPlayer .window-header button.header-control:focus,
+.application.wgtngmMiniPlayer .window-header button.header-control:active {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
 .application.wgtngmMiniPlayer
 {
 	min-height: 115px;
@@ -369,10 +375,10 @@ body.theme-light .wgtngmSoundboard .sound-button.playing
   border: none !important;
 }
 
-.wgtngmMiniPlayer button.wgtngm-loop :focus,
-.wgtngmMiniPlayer button.wgtngm-loop :active, 
-.wgtngmSoundboard button.remove-image-button :focus,
-.wgtngmSoundboard button.remove-image-button :active {
+.wgtngmMiniPlayer button:focus,
+.wgtngmMiniPlayer button.active, 
+.wgtngmSoundboard button.remove-image-button:focus,
+.wgtngmSoundboard button.remove-image-button.active {
   outline: none !important;
   box-shadow: none !important;
   border: none !important;
@@ -441,3 +447,334 @@ body.theme-light .wgtngmSoundboard .sound-button.playing
     width: 10px;
     height: 10px;
 }
+
+
+
+
+
+
+
+/* Tag Editor */
+.application.wgtgm-tag-editor .window-content{
+    overflow-y: scroll;
+}
+
+.application.wgtgm-tag-generator{
+     max-width: 750px;
+    max-height: 1000px;
+    height: 600px;
+    width: 500px;
+    min-width: 400px;
+    min-height: 500px;
+   
+}
+.application.wgtgm-tag-editor{
+    max-width: 750px;
+    max-height: 1000px;
+    height: 700px;
+    width: 600px;
+    min-width: 500px;
+    min-height: 600px;
+}
+.wgtgm-tag-editor-content .track-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.wgtgm-tag-editor-content .track-entry {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 5px;
+    border-radius: 4px;
+    display: grid;
+    grid-template-columns: auto auto max-content;
+    gap: 8px;
+    align-items: center;
+    border-bottom: 1px dotted;
+    padding-bottom: 4px;
+    padding-top: 4px;
+}
+
+.wgtgm-tag-editor-content .tag-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+/*    margin-top: 4px;*/
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.wgtgm-tag-editor-content .tag-pill {
+    background: var(--color-level-info-border);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 0.8em;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.wgtgm-tag-editor-content .tag-pill i { cursor: pointer; align-self: self-end;}
+.wgtgm-tag-editor-content .tag-pill i:hover { color: #aaa; }
+
+.wgtgm-tag-editor-content .add-tag-wrapper {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    min-width: 156px;
+}
+.wgtgm-tag-editor-content .add-tag-wrapper input {
+    height: 28px;
+    width: 100px;
+    font-size: 0.8em;
+}
+.wgtgm-tag-editor-content .add-tag-wrapper button {
+    height: 28px;
+    width: 28px;
+    padding: 0;
+    border: 0px;
+    background: #ffffff10;
+}
+
+/* Generator */
+/* Tag Editor */
+
+
+.application.wgtgm-tag-generator .sheet-footer{
+    padding-top: 10px;
+}
+.application.wgtgm-tag-generator .sheet-footer button{
+    width: 100%;
+}
+
+
+.wgtgm-tag-generator .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 10px;
+    max-height: 200px;
+    overflow: scroll;
+}
+
+.wgtngmMiniPlayer .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    max-height: 80px;
+    overflow-y: scroll;
+    margin-bottom: 5px;
+}
+
+.wgtgm-tag-generator .tag-toggle {
+    flex: 0 0 auto;
+    border: 1px solid var(--color-border-light-2);
+    width: auto;
+    font-size: 0.9em;
+}
+.wgtgm-tag-generator .preview-section{
+        overflow: auto;
+    flex-grow: 1;
+    height: -webkit-fill-available;
+}
+.wgtgm-tag-generator .tag-toggle.selected {
+    background: var(--color-level-info-border);
+    color: white;
+}
+
+.wgtgm-tag-editor-content .preview-btn,
+.wgtgm-tag-generator .preview-btn.preview-btn {
+    background: #ffffff10;
+    border: none;
+    cursor: pointer;
+    color: var(--color-level-info-border);
+    padding: 0px;
+    width: 28px;
+    height: 28px;
+}
+
+.wgtgm-tag-editor-content .preview-btn .fa-stop{
+color: var(--color-level-error);
+}
+
+.wgtgm-tag-editor-content .preview-btn:hover,
+.wgtgm-tag-generator .preview-btn:hover {
+    text-shadow: 0 0 5px var(--color-level-info-border);
+    box-shadow: none; 
+}
+
+.track-info {
+    display: flex;
+    align-items: center; 
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.wgtgm-tag-editor-content .preview-btn.small,
+.wgtgm-tag-generator .preview-btn.small {
+    font-size: 0.8em;
+    width: 20px;
+    height: 20px;
+}
+
+
+.wgtgm-tag-editor-content .preview-btn.small .fa-stop,
+.wgtgm-tag-generator .preview-btn.small .fa-stop {
+color: var(--color-level-error);
+}
+
+fa-play
+
+.wgtgm-tag-editor-content .add-tag-wrapper input::-webkit-calendar-picker-indicator {
+    margin-right: -2px; 
+    margin-bottom: 8px; 
+    cursor: pointer;
+}
+
+.wgtgm-tag-editor-content button:focus,
+.wgtgm-tag-editor-content button.active, 
+.wgtgm-tag-generator button:focus,
+.wgtgm-tag-generator button.active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+
+.wgtgm-tag-generator .tag-mode-toggle {
+    flex: 0 0 auto;
+    width: auto;
+    font-size: 0.8em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.2);
+    margin-right: 5px;
+}
+
+/* Distinct colors for modes */
+.wgtgm-tag-generator .tag-mode-toggle.AND {
+    background: #5a9; 
+    color: white;
+}
+
+.wgtgm-tag-generator .tag-mode-toggle.OR {
+    background: #e95; 
+    color: white;
+}
+
+/* Ensure hover states are clear */
+.wgtgm-tag-generator .tag-mode-toggle:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+
+.application.wgtgm-tag-generator .window-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important; 
+    padding: 0; 
+}
+
+.wgtgm-tag-generator-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; 
+    padding: 10px;
+}
+
+.wgtgm-tag-generator .preview-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; 
+}
+
+.wgtgm-tag-generator .preview-list {
+    flex: 1; 
+    overflow-y: auto;
+    max-height: none; 
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.application.wgtgm-tag-generator .sheet-footer {
+    flex: 0 0 auto;
+    padding: 10px;
+
+}
+
+
+.wgtgm-tag-generator .preview-list li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 4px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.selected-track-tags {
+    font-size: 0.75em;
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--color-border-light-2);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+}
+
+.selected-track-tags.active {
+    background: var(--color-level-success);
+}
+
+
+.wgtgm-tag-generator .tag-toggle.include {
+    background: var(--color-level-success);
+    color: white;
+    border-color: var(--color-level-success);
+}
+
+.wgtgm-tag-generator .tag-toggle.exclude {
+    background: var(--color-level-error);
+    color: white;
+}
+
+
+/* Tag Mode Styles in Drawer */
+.wgtngmMiniPlayer .tag-toggle {
+    flex: 0 0 auto;
+    width: auto;
+    font-size: 0.75em;
+    cursor: pointer;
+}
+.wgtngmMiniPlayer .tag-toggle.include {
+    background: var(--color-level-success);
+    color: white;
+    border-color: var(--color-level-success) !important;
+}
+.wgtngmMiniPlayer .tag-toggle.exclude {
+    background: var(--color-level-error);
+    color: white;
+    border-color: var(--color-level-error) !important;
+}
+
+.wgtngmMiniPlayer .window-header .fa-tags.true {
+    color: var(--color-level-success);
+}
+
+.wgtngmMiniPlayer .tag-cloud button:focus{
+    outline: 1px solid #00000000 !important;
+    border: 1px solid #00000000 !important;
+}
+
+
+
+

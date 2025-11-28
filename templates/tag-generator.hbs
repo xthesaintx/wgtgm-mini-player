@@ -1,0 +1,38 @@
+<div class="wgtgm-tag-generator-content" >
+    <div class="tag-cloud">
+        {{#if hasTags}}
+        <button type="button" class="tag-mode-toggle {{matchMode}}" data-action="toggleMatchMode" title="Toggle: Matches All (AND) / Matches Any (OR)">
+            {{matchMode}}
+        </button>
+        {{/if}}
+
+        {{#each tags}}
+        <button type="button" class="tag-toggle {{this.stateClass}}" data-action="toggleTag" data-tag="{{this.name}}">
+            {{this.name}}
+        </button>
+        {{/each}}
+    </div>
+    
+    <hr>
+    
+    <div class="preview-section">
+        <ul class="preview-list">
+            {{#each previewTracks}}
+            <li>
+                <button type="button" class="preview-btn small" data-action="previewTrack" data-path="{{this.path}}" title="Preview">
+                    <i class="fas fa-play"></i>
+                </button>
+                <span style="margin-right: 5px;">{{this.name}}</span>
+
+                {{#each this.tags}}
+                <span class="selected-track-tags {{#if this.isSelected}}active{{/if}}" data-action="toggleTag" data-tag="{{this.name}}">
+                    {{this.name}}
+                </span>
+                {{/each}}
+            </li>
+            {{else}}
+            <li class="empty">No matching tracks found...</li>
+            {{/each}}
+        </ul>
+    </div>
+</div>

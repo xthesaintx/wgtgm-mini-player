@@ -5,7 +5,7 @@ import { MODULE_NAME } from "./settings.js";
  */
 import { wgtngmMiniPlayerSheet } from "./mp-player.js";
 import { wgtngmSoundboardSheet } from "./sb-player.js";
-
+import { TagEditor, TagPlaylistGenerator } from "./tags.js"; 
 export const localize = (key) => game.i18n.localize(`${MODULE_NAME}.${key}`);
 
 export const format = (key, data) =>
@@ -35,6 +35,12 @@ export const getButtonGrouphead = () => `
     <button class="mp-remove-playlists" type="button" title=" Remove Playlists" data-action="removePlaylists" >
             <i class="fas fa-trash"></i> Remove Playlists
         </button>
+    <button class="mp-edit-tags" type="button" title="Edit Track Tags">
+        <i class="fas fa-tags"></i> Edit Tags
+    </button>
+    <button class="mp-create-tag-playlist" type="button" title="Create Playlist from Tags">
+        <i class="fas fa-filter"></i> Tag Playlist
+    </button>
     </div>
 `;
 
@@ -118,6 +124,15 @@ export function addplaylistDirectoryUI(html) {
         ?.addEventListener("click", async () => {
             openwgtngmSoundboardSheet();
         });
+
+nativeHtml.querySelector(".mp-edit-tags")?.addEventListener("click", () => {
+        new TagEditor().render(true);
+    });
+
+    nativeHtml.querySelector(".mp-create-tag-playlist")?.addEventListener("click", () => {
+        new TagPlaylistGenerator().render(true);
+    });
+
 
 
 }

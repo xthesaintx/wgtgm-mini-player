@@ -9,7 +9,19 @@ export const MODULE_NAME = "wgtgm-mini-player";
 export default async function miniplayerSettings() {
     
     const localize = (key) => game.i18n.localize(`MINI_PLAYER.settings.${key}`);
-    
+    game.settings.register("wgtgm-mini-player", "tagSelectionState", {
+        scope: "client",
+        config: false,
+        type: Array, // We will store the Map as an array of entries [[tag, state], ...]
+        default: []
+    });
+
+    game.settings.register("wgtgm-mini-player", "lastTagMode", {
+        scope: "client",
+        config: false,
+        type: Boolean,
+        default: false
+    });
     game.settings.register("wgtgm-mini-player", "runonlyonce", {
         name: "Welcome message",
         hint: "Disable to see the Welcome Message",
@@ -18,6 +30,13 @@ export default async function miniplayerSettings() {
         requiresReload: true,
         type: Boolean,
         default: false,
+    });
+    
+    game.settings.register("wgtgm-mini-player", "trackTags", {
+        scope: "world",
+        config: false,
+        type: Object,
+        default: {}
     });
 
     game.settings.register("wgtgm-mini-player", "mpSheetDimensions", {

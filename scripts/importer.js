@@ -10,7 +10,7 @@ const AUDIO_EXTENSIONS = new Set(
  * @param {string} filePath - The full path to the file.
  * @returns {string} A formatted name.
  */
-function formatTrackName(filePath) {
+export function formatTrackName(filePath) {
     let decodedPath = "";
     try {
         decodedPath = decodeURIComponent(filePath);

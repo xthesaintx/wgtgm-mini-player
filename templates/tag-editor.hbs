@@ -1,0 +1,36 @@
+<div class="wgtgm-tag-editor-content">
+    <div class="header">
+        <p>Type a tag and press Enter or click the + button.</p>
+        <datalist id="wgtgm-existing-tags">
+            {{#each allTags}}
+            <option value="{{this}}"></option>
+            {{/each}}
+        </datalist>
+        <input type="file" id="wgtgm-import-file" accept=".json" style="display:none;" />
+    </div>
+    
+    <div class="track-list">
+        {{#each tracks}}
+        <div class="track-entry">
+            <div class="track-info">
+                <strong>{{this.name}}</strong>
+            </div>
+            <div class="tag-container">
+                {{#each this.tags}}
+                <span class="tag-pill">
+                    {{this}} <i class="fas fa-circle-x" data-action="removeTag" data-path="{{../path}}" data-tag="{{this}}"></i>
+                </span>
+                {{/each}}
+            </div>
+            <div class="add-tag-wrapper">
+                <input type="text" list="wgtgm-existing-tags" placeholder="Add tag..." 
+                       onkeydown="if(event.key === 'Enter') this.nextElementSibling.click()">
+                <button type="button" data-action="addTag" data-path="{{this.path}}"><i class="fas fa-circle-plus"></i></button>
+                <button type="button" class="preview-btn" data-action="previewTrack" data-path="{{this.path}}" title="Preview Track">
+                    <i class="fas fa-play"></i>
+                </button>
+            </div>    
+        </div>
+        {{/each}}
+    </div>
+</div>
