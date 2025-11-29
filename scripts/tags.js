@@ -435,7 +435,6 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
                     return;
                 }
 
-                // Construct Name
                 const incStr = included.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(this.matchMode === "AND" ? " & " : " | ");
                 const excStr = excluded.length > 0 ? " !" + excluded.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(" !") : "";
                 const finalName = `Tag: ${incStr}${excStr}`;
@@ -473,7 +472,7 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
 
     constructor(options) {
         super(options);
-        this.tagSelection = new Map(); // Map<string, number> where 1=Include, -1=Exclude
+        this.tagSelection = new Map(); 
         this.matchMode = "AND"; 
     }
 
@@ -493,7 +492,6 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
         if (excluded.length > 0) {
             tracks = tracks.filter(track => {
                 const trackTags = game.wgtngmTags.getTags(track.path);
-                // If track has ANY excluded tag, remove it
                 return !excluded.some(t => trackTags.includes(t));
             });
         }
@@ -527,9 +525,11 @@ async _prepareContext(options) {
             const tags = game.wgtngmTags.getTags(t.path);
             tags.forEach(tag => availableTags.add(tag));
         });
-
         const refinedTagCloud = allTags
-            .filter(t => availableTags.has(t) || this.tagSelection.has(t))
+            .filter(t => {
+                if (this.matchMode === "OR") return true;
+                return availableTags.has(t) || this.tagSelection.has(t);
+            })
             .map(t => {
                 const stateVal = this.tagSelection.get(t) || 0;
                 let stateClass = "";

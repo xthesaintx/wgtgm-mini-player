@@ -1,3 +1,7 @@
+## 2.2
+- Added tag player mode
+- Tag Support
+
 ## 2.0
 - Fixed bug when stop on track selected was on and play on select was off would stop track
 - Crossfade for soundboard and music player
