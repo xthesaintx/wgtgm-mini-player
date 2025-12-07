@@ -1,3 +1,6 @@
+## 3.0
+- Added TTRPG Music support
+
 ## 2.2
 - Added tag player mode
 - Tag Support

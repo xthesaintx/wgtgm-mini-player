@@ -1,7 +1,7 @@
 import { localize, format, formatTimestamp, openwgtngmSoundboardSheet } from "./helper.js";
 import { TagEditor, TagPlaylistGenerator } from "./tags.js"; 
 import { MODULE_NAME } from "./settings.js";
-
+import { ttrpgIntegration } from "./ttrpg.js"; 
 var SearchFilter = foundry.applications.ux.SearchFilter;
 
 var ApplicationV2 = foundry.applications.api.ApplicationV2;
@@ -36,7 +36,7 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
             "create-taglist": this.#createTaglist,
             "edit-taglist": this.#editTagList,
             "toggle-tag-mode": this.#toggleTagMode,
-            // "toggle-tag-select": this.#toggleTagSelect
+            "toggle-ttrpg-source": this.#toggleTTRPG,
             "toggle-tag-select": {
                 handler: this.#toggleTagSelect,
                 buttons: [0, 2],
@@ -53,15 +53,9 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
     #timestampInterval = null;
 
     #tagMode = game.settings.get("wgtgm-mini-player", "lastTagMode") ?? false;
-    // #tagSelection = new Map(game.settings.get("wgtgm-mini-player", "tagSelectionState") ?? []);
-    #tagSelection = (() => {
-        const saved = game.settings.get("wgtgm-mini-player", "tagSelectionState") ?? [];
-        // Ensure we only keep tags that actually exist in the TagManager
-        const availableTags = new Set(game.wgtngmTags?.getAllUniqueTags() ?? []);
-        const validEntries = saved.filter(([tag]) => availableTags.has(tag));
-        return new Map(validEntries);
-    })();
+    #tagSelection = new Map(game.settings.get("wgtgm-mini-player", "tagSelectionState") ?? []);
     #matchMode = "AND";
+    #includeTTRPG = game.settings.get("wgtgm-mini-player", "ttrpgSourceEnabled") ?? false;
     #tagPlaylistName = "taglist-miniPlayer";
 
     static PARTS = {
@@ -94,8 +88,26 @@ async _prepareContext(options) {
         const favoritePaths = new Set(favoritesPlaylist ? favoritesPlaylist.sounds.map(s => s.path) : []);
 
         if (this.#tagMode) {
-            let tagPlaylist = game.playlists.find(p => p.name === this.#tagPlaylistName);
+            if (game.wgtngmTags.allTracks.length === 0) await game.wgtngmTags.scanLibrary();
+
+            const allUniqueTags = new Set(game.wgtngmTags.getAllUniqueTags());
             
+            if (this.#includeTTRPG && ttrpgIntegration.isAvailable) {
+                 ttrpgIntegration.tags.forEach(t => allUniqueTags.add(t));
+            }
+
+            let stateChanged = false;
+            for (const [tag] of this.#tagSelection) {
+                if (!allUniqueTags.has(tag)) {
+                    this.#tagSelection.delete(tag);
+                    stateChanged = true;
+                }
+            }
+            if (stateChanged) {
+                game.settings.set("wgtgm-mini-player", "tagSelectionState", Array.from(this.#tagSelection.entries()));
+            }
+
+            let tagPlaylist = game.playlists.find(p => p.name === this.#tagPlaylistName);
             this.#currentPlaylist = tagPlaylist || null;
 
             if (this.#currentPlaylist) {
@@ -109,20 +121,44 @@ async _prepareContext(options) {
                     this.#currentTrack = playingSound || this.#currentPlaylist.playbackOrder.map(id => this.#currentPlaylist.sounds.get(id))[0] || null;
                 }
             }
+            
+            const filteredTracks = this.#getCombinedFilteredTracks();
+            
+            let availableTags = new Set();
+            
+            if (this.#matchMode === "AND") {
+                filteredTracks.forEach(t => {
+                    let tags;
+                    if (t.isTTRPG) tags = t.tags;
+                    else tags = game.wgtngmTags.getTags(t.path);
+                    
+                    tags.forEach(tag => availableTags.add(tag));
+                });
+            }
 
-            if (game.wgtngmTags.allTracks.length === 0) await game.wgtngmTags.scanLibrary();
+            const allLocalTags = game.wgtngmTags.getAllUniqueTags();
+            let allTagsSet = new Set(allLocalTags);
+            if (this.#includeTTRPG && ttrpgIntegration.isAvailable) {
+                ttrpgIntegration.tags.forEach(t => allTagsSet.add(t));
+            }
+            const PRIORITY_TAGS = ["standard", "alternate", "bonus"];
             
-            const filteredTracks = game.wgtngmTags.getFilteredTracks(this.#tagSelection, this.#matchMode);
-            
-            const availableTags = new Set();
-            filteredTracks.forEach(t => {
-                const trackTags = game.wgtngmTags.getTags(t.path);
-                trackTags.forEach(tag => availableTags.add(tag));
+            const allTags = Array.from(allTagsSet).sort((a, b) => {
+                const indexA = PRIORITY_TAGS.indexOf(a);
+                const indexB = PRIORITY_TAGS.indexOf(b);
+                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                if (indexA !== -1) return -1;
+                if (indexB !== -1) return 1;
+            return a.localeCompare(b);
             });
 
-            const allTags = game.wgtngmTags.getAllUniqueTags();
+
             const tagCloud = allTags
-                .filter(t => availableTags.has(t) || this.#tagSelection.has(t))
+                .filter(t => {
+                    if (this.#matchMode === "OR") return true;
+                    if (this.#tagSelection.size === 0) return true;
+                    return availableTags.has(t) || this.#tagSelection.has(t);
+                })
                 .map(t => {
                     const stateVal = this.#tagSelection.get(t) || 0;
                     let stateClass = "";
@@ -132,9 +168,13 @@ async _prepareContext(options) {
                 });
 
             const context = await super._prepareContext(options);
+
             context.tagMode = true;
             context.tags = tagCloud;
             context.matchMode = this.#matchMode;
+            
+            context.showTTRPGToggle = ttrpgIntegration.active;
+            context.ttrpgEnabled = this.#includeTTRPG;
 
             let tracks = [];
             if (this.#currentPlaylist) {
@@ -224,6 +264,21 @@ async _prepareContext(options) {
         context.isPlaying = this.#currentTrack?.playing ?? false;
         context.isLooping = this.#currentTrack?.repeat ?? false;
         context.isDrawerOpen = game.settings.get("wgtgm-mini-player", "mpDrawerOpen");
+
+
+        let currentTrackTags = [];
+        if (this.#currentTrack) {
+            const path = this.#currentTrack.path;
+            currentTrackTags = game.wgtngmTags.getTags(path);
+            if (currentTrackTags.length === 0 && ttrpgIntegration.active && ttrpgIntegration.isAvailable) {
+                const ttrpgTrack = ttrpgIntegration.tracks.find(t => 
+                    ttrpgIntegration.getPath(t, false) === path || 
+                    ttrpgIntegration.getPath(t, true) === path
+                );
+                if (ttrpgTrack) currentTrackTags = ttrpgTrack.tags;
+            }
+        }
+        context.currentTrackTags = currentTrackTags.map(t => ({ name: t }));
 
         let volume = 0.5;
         if (this.#currentTrack) {
@@ -335,11 +390,73 @@ async _prepareContext(options) {
         html.querySelector('[data-action="toggle-mute"]').addEventListener("click", this.#onToggleMute.bind(this));
     }
 
-    async #updateTagPlaylist() {
-        const filteredTracks = game.wgtngmTags.getFilteredTracks(this.#tagSelection, this.#matchMode);
+
+    #getCombinedFilteredTracks() {
+        let pool = [...game.wgtngmTags.allTracks];
+        
+        if (this.#includeTTRPG && ttrpgIntegration.isAvailable) {
+            pool = pool.concat(ttrpgIntegration.tracks);
+        }
+
+        const included = [];
+        const excluded = [];
+        for (const [tag, state] of this.#tagSelection.entries()) {
+            if (state === 1) included.push(tag);
+            else if (state === -1) excluded.push(tag);
+        }
+
+        if (included.length === 0 && excluded.length === 0) {
+            return pool;
+        }
+
+        return pool.filter(track => {
+            let trackTags;
+            if (track.isTTRPG) {
+                trackTags = track.tags;
+            } else {
+                trackTags = game.wgtngmTags.getTags(track.path);
+            }
+
+            if (excluded.some(t => trackTags.includes(t))) return false;
+
+            if (included.length > 0) {
+                if (this.#matchMode === "AND") {
+                    return included.every(t => trackTags.includes(t));
+                } else {
+                    return included.some(t => trackTags.includes(t));
+                }
+            }
+            return true;
+        });
+    }
+
+    static async #toggleTTRPG(event, target) {
+        const app = game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance;
+        if (!app) return;
+        
+        if (!ttrpgIntegration.active) {
+            ui.notifications.warn("TTRPG Music module is not active or linked.");
+            return;
+        }
+
+        app.#includeTTRPG = !app.#includeTTRPG;
+        // app.#tagSelection.clear();
+        await game.settings.set("wgtgm-mini-player", "ttrpgSourceEnabled", app.#includeTTRPG);
+        await app.#updateTagPlaylist();
+        app.render();
+    }
+
+
+async #updateTagPlaylist() {
+        const filteredTracks = this.#getCombinedFilteredTracks(); 
+        const sortedFiltered = filteredTracks.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true}));
+        const MAX_TRACKS = game.settings.get("wgtgm-mini-player", "maxTrackCount");
+        const limitedTracks = sortedFiltered.slice(0, MAX_TRACKS); 
+
         const crossfadeBaseDuration = game.settings.get("wgtgm-mini-player", "crossfade") * 1000;
         const enableCrossfade = game.settings.get("wgtgm-mini-player", "enable-crossfade");
         const fadeDuration = enableCrossfade ? crossfadeBaseDuration : 0;        
+        
         let playlist = game.playlists.find(p => p.name === this.#tagPlaylistName);
         if (!playlist) {
             playlist = await Playlist.create({
@@ -350,21 +467,28 @@ async _prepareContext(options) {
                 fade: fadeDuration 
             });
         } else {
-            // Ensure existing playlist has correct fade setting
             if (playlist.fade !== fadeDuration) {
                 await playlist.update({ fade: fadeDuration });
             }
         }
 
         const shouldLoop = game.settings.get("wgtgm-mini-player", "set-music-to-loop");
+
+        const validPaths = new Set();
         
+        limitedTracks.forEach(t => {
+            if (t.isTTRPG) {
+                validPaths.add(ttrpgIntegration.getPath(t, shouldLoop));
+            } else {
+                validPaths.add(t.path);
+            }
+        });
+
         const soundsToDelete = [];
-        const filteredPaths = new Set(filteredTracks.map(t => t.path));
-    
         const playingSound = playlist.sounds.find(s => s.playing);
         
         for (const sound of playlist.sounds) {
-            if (sound.playing && filteredPaths.has(sound.path)) {
+            if (sound.playing && validPaths.has(sound.path)) {
                 continue;
             }
             soundsToDelete.push(sound.id);
@@ -373,14 +497,22 @@ async _prepareContext(options) {
         if (soundsToDelete.length > 0) {
             await playlist.deleteEmbeddedDocuments("PlaylistSound", soundsToDelete);
         }
+
         const existingPaths = new Set(playlist.sounds.map(s => s.path));
         const soundsToAdd = [];
 
-        for (const track of filteredTracks) {
-            if (!existingPaths.has(track.path)) {
+        for (const track of limitedTracks) {
+            let finalPath;
+            if (track.isTTRPG) {
+                finalPath = ttrpgIntegration.getPath(track, shouldLoop);
+            } else {
+                finalPath = track.path;
+            }
+
+            if (!existingPaths.has(finalPath)) {
                 soundsToAdd.push({
                     name: track.name,
-                    path: track.path,
+                    path: finalPath,
                     repeat: shouldLoop
                 });
             }
@@ -390,7 +522,6 @@ async _prepareContext(options) {
             await playlist.createEmbeddedDocuments("PlaylistSound", soundsToAdd);
         }
         
-    
         this.#currentPlaylist = playlist;
         const newPlaying = playlist.sounds.find(s => s.playing);
         this.#currentTrack = newPlaying || playlist.sounds.contents[0] || null;
@@ -576,22 +707,19 @@ async _prepareContext(options) {
             }
 
 
-            // Check if track is already a favorite (by path)
             const existingSound = favoritesPlaylist.sounds.find(s => s.path === targetSound.path);
 
             try {
                 if (existingSound) {
-                    // Remove from favorites
                     await favoritesPlaylist.deleteEmbeddedDocuments("PlaylistSound", [existingSound.id]);
                     ui.notifications.info(`Removed "${targetSound.name}" from favorites.`);
                 } else {
-                    // Add to favorites
                     const soundData = {
                         name: targetSound.name,
                         path: targetSound.path,
-                        repeat: false, // Favorites probably shouldn't loop by default
+                        repeat: false, 
                         volume: targetSound.volume,
-                        flags: { ...targetSound.flags } // Preserve flags
+                        flags: { ...targetSound.flags } 
                     };
                     await favoritesPlaylist.createEmbeddedDocuments("PlaylistSound", [soundData]);
                     ui.notifications.info(`Added "${targetSound.name}" to favorites.`);

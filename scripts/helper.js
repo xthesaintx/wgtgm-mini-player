@@ -68,7 +68,7 @@ export function handleMPClick(event) {
     if (module !== MODULE_NAME) {
         return;
     }
-    console.log(module);
+    // console.log(module);
     switch (action) {
         case "openMenu":
             if (args[0]) {

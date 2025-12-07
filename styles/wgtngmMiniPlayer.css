@@ -40,7 +40,8 @@ body.theme-light .wgtngmSoundboard .sound-button.playing
 .mp-miniplayer-panel-buttons button{
     width: -webkit-fill-available;
 }
-
+.application.wgtgm-tag-generator.minimized,
+.application.wgtgm-tag-editor.minimized,
 .application.wgtngmSoundboard.minimized,
 .application.wgtngmMiniPlayer.minimized
 {
@@ -564,7 +565,7 @@ body.theme-light .wgtngmSoundboard .sound-button.playing
     display: flex;
     flex-wrap: wrap;
     gap: 3px;
-    max-height: 80px;
+    max-height: 160px;
     overflow-y: scroll;
     margin-bottom: 5px;
 }
@@ -643,6 +644,15 @@ fa-play
   border: none !important;
 }
 
+.wgtgm-tag-generator button.tag-mode-toggle.active[data-action="toggleTTRPG"] {
+        background: #5a9; 
+            color: white;
+}
+
+.wgtgm-tag-generator button.tag-mode-toggle[data-action="toggleTTRPG"] {
+        background: #444; 
+            
+}
 
 .wgtgm-tag-generator .tag-mode-toggle {
     flex: 0 0 auto;
@@ -736,6 +746,8 @@ fa-play
 }
 
 
+
+
 .wgtgm-tag-generator .tag-toggle.include {
     background: var(--color-level-success);
     color: white;
@@ -748,6 +760,7 @@ fa-play
 }
 
 
+
 /* Tag Mode Styles in Drawer */
 .wgtngmMiniPlayer .tag-toggle {
     flex: 0 0 auto;
@@ -755,6 +768,7 @@ fa-play
     font-size: 0.75em;
     cursor: pointer;
 }
+.wgtngmMiniPlayer .tag-toggle.enabled,
 .wgtngmMiniPlayer .tag-toggle.include {
     background: var(--color-level-success);
     color: white;
@@ -765,6 +779,7 @@ fa-play
     color: white;
     border-color: var(--color-level-error) !important;
 }
+
 
 .wgtngmMiniPlayer .window-header .fa-tags.true {
     color: var(--color-level-success);

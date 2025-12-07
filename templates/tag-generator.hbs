@@ -1,8 +1,15 @@
-<div class="wgtgm-tag-generator-content" >
+<div class="wgtgm-tag-generator-content">
     <div class="tag-cloud">
         {{#if hasTags}}
         <button type="button" class="tag-mode-toggle {{matchMode}}" data-action="toggleMatchMode" title="Toggle: Matches All (AND) / Matches Any (OR)">
             {{matchMode}}
+        </button>
+        {{/if}}
+
+        {{!-- NEW: TTRPG Toggle --}}
+        {{#if showTTRPGToggle}}
+        <button type="button" class="tag-mode-toggle {{#if ttrpgEnabled}}active{{/if}}" data-action="toggleTTRPG" title="Include/Exclude TTRPG Music Patreon Tracks" >
+            TTRPG
         </button>
         {{/if}}
 
@@ -19,16 +26,10 @@
         <ul class="preview-list">
             {{#each previewTracks}}
             <li>
-                <button type="button" class="preview-btn small" data-action="previewTrack" data-path="{{this.path}}" title="Preview">
-                    <i class="fas fa-play"></i>
+<button type="button" class="preview-btn small" data-action="previewTrack" data-path="{{this.previewPath}}" title="Preview">
+                    <i class="fas {{#if this.isPlaying}}fa-stop{{else}}fa-play{{/if}}"></i>
                 </button>
                 <span style="margin-right: 5px;">{{this.name}}</span>
-
-                {{#each this.tags}}
-                <span class="selected-track-tags {{#if this.isSelected}}active{{/if}}" data-action="toggleTag" data-tag="{{this.name}}">
-                    {{this.name}}
-                </span>
-                {{/each}}
             </li>
             {{else}}
             <li class="empty">No matching tracks found...</li>

@@ -12,10 +12,15 @@ export default async function miniplayerSettings() {
     game.settings.register("wgtgm-mini-player", "tagSelectionState", {
         scope: "client",
         config: false,
-        type: Array, // We will store the Map as an array of entries [[tag, state], ...]
+        type: Array, 
         default: []
     });
-
+    game.settings.register("wgtgm-mini-player", "ttrpgSourceEnabled", {
+        scope: "client",
+        config: false,
+        type: Boolean,
+        default: false 
+    });
     game.settings.register("wgtgm-mini-player", "lastTagMode", {
         scope: "client",
         config: false,
@@ -87,6 +92,16 @@ export default async function miniplayerSettings() {
         requiresReload: false,
         type: new foundry.data.fields.NumberField({nullable: false, min: 0.5, max: 10, step: 0.5}),
         default: 2,
+    });
+
+    game.settings.register("wgtgm-mini-player", "maxTrackCount", {
+        name: "Maximum number of tracks in a Tag Playlist",
+        hint: "Limits the number of tracks in the tag playlist created dynamically in the Mini Player",
+        scope: "world",
+        config: true,
+        requiresReload: true,
+        type: new foundry.data.fields.NumberField({nullable: false, min: 10, max: 30, step: 1}),
+        default: 20,
     });
 
     game.settings.register("wgtgm-mini-player", "music-folder", {
@@ -172,6 +187,16 @@ export default async function miniplayerSettings() {
         config: false,
         type: Object,
         default: null
+    });
+
+    game.settings.register("wgtgm-mini-player", "linkTTRPG", {
+        name: "Link with TTRPG Music (Patreon)",
+        hint: "Enable integration with the Tabletop RPG Music module. Requires the module to be installed and active.",
+        scope: "client", 
+        config: true,
+        type: Boolean,
+        requiresReload: true,
+        default: false,
     });
 
     game.keybindings.register("wgtgm-mini-player", "MiniPlayer", {

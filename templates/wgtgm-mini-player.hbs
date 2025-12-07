@@ -3,10 +3,17 @@
         <i class="fas fa-caret-down wgtngm-drawer-handle" data-action="open-playlists"></i>
 <div class="wgtngm-drawer-content">
             {{#if tagMode}}
-                <div class="tag-cloud">
+<div class="tag-cloud">
+                    {{#if showTTRPGToggle}}
+                    <button type="button" class="tag-toggle {{#if ttrpgEnabled}}enabled{{/if}}" data-action="toggle-ttrpg-source" 
+                            style="flex:0 0 auto; width:auto; font-size:0.75em; padding:1px 5px; border-radius:3px; border:1px solid rgba(0,0,0,0.2);">
+                        TTRPG
+                    </button>
+                    {{/if}}
+
                     {{#each tags}}
                     <button type="button" class="tag-toggle {{this.stateClass}}" data-action="toggle-tag-select" data-tag="{{this.name}}" 
-                            style="">
+                            style="flex:0 0 auto; width:auto; font-size:0.75em; padding:1px 5px; border-radius:3px; border:1px solid rgba(0,0,0,0.2);">
                         {{this.name}}
                     </button>
                     {{/each}}

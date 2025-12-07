@@ -1,7 +1,7 @@
 import { MODULE_NAME } from "./settings.js";
 import { formatTrackName } from "./importer.js"; 
 import { confirmationDialog } from "./helper.js";
-
+import { ttrpgIntegration } from "./ttrpg.js"; // Import the singleton
 const AUDIO_EXTENSIONS = new Set(Object.keys(CONST.AUDIO_FILE_EXTENSIONS).map(e => `.${e.toLowerCase()}`));
 const FilePicker =foundry.applications.apps.FilePicker.implementation;
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -22,7 +22,15 @@ async function playPreview(path, btnElement) {
             }
             game.wgtngmPreviewBtn = null;
         }
+
         if (isSameTrack) {
+            if (btnElement) {
+                const icon = btnElement.querySelector("i");
+                if (icon) {
+                    icon.classList.remove("fa-stop");
+                    icon.classList.add("fa-play");
+                }
+            }
             return;
         }
     }
@@ -107,7 +115,7 @@ export class TagManager {
                 await this._scanRecursive(dir, fileList);
             }
         } catch (e) {
-            console.error("Mini Player Tag Scan Error:", e);
+            // console.error("Mini Player Tag Scan Error:", e);
         }
     }
 
@@ -216,7 +224,7 @@ export class TagManager {
     }
 
     async importTags(importedData, mode = "merge") {
-        console.log(importedData);
+        // console.log(importedData);
         if (!importedData || typeof importedData !== 'object') {
             ui.notifications.error("Mini Player: Invalid tag data.");
             return;
@@ -314,7 +322,6 @@ export class TagEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     
     return frame;
   }
-// NEW: Handle File Input Change (must be bound in _onRender)
     _onRender(context, options) {
         super._onRender(context, options);
         
@@ -332,10 +339,11 @@ export class TagEditor extends HandlebarsApplicationMixin(ApplicationV2) {
         }
 
         const allTags = game.wgtngmTags.getAllUniqueTags();
-
+        const currentPreview = game.wgtngmPreviewSound?._previewPath;
         context.tracks = game.wgtngmTags.allTracks.map(t => ({
             ...t,
-            tags: game.wgtngmTags.getTags(t.path)
+            tags: game.wgtngmTags.getTags(t.path),
+            isPlaying: currentPreview === t.path
         })).sort((a, b) => a.name.localeCompare(b.name));
         context.allTags = allTags;
         return context;
@@ -420,6 +428,12 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
                 },
                 buttons: [0, 2] // Enable Left (0) and Right (2) clicks
             },
+            toggleTTRPG: function() {
+                if (!ttrpgIntegration.active) return;
+                this.includeTTRPG = !this.includeTTRPG;
+                this.tagSelection.clear();
+                this.render();
+            },
             toggleMatchMode: function() {
                 this.matchMode = this.matchMode === "AND" ? "OR" : "AND";
                 this.render();
@@ -428,7 +442,7 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
                 if (this.tagSelection.size === 0) return;
 
                 const { included, excluded } = this._getSplitTags();
-                const matchingTracks = this._getFilteredTracks(included, excluded);
+                const matchingTracks = this._getCombinedFilteredTracks(included, excluded);
 
                 if (matchingTracks.length === 0) {
                     ui.notifications.warn("No tracks found with these tags.");
@@ -447,12 +461,20 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
                     flags: { [MODULE_NAME]: { createdFromTags: true } }
                 });
 
-                const sounds = matchingTracks.map(t => ({
-                    name: t.name,
-                    path: t.path,
-                    repeat: shouldLoop,
-                    flags: { [MODULE_NAME]: { imported: true } }
-                }));
+                const sounds = matchingTracks.map(t => {
+                    // Resolve Path: Local file or TTRPG URL
+                    let path = t.path;
+                    if (t.isTTRPG) {
+                        path = ttrpgIntegration.getPath(t, shouldLoop);
+                    }
+
+                    return {
+                        name: t.name,
+                        path: path,
+                        repeat: shouldLoop,
+                        flags: { [MODULE_NAME]: { imported: true } }
+                    };
+                });
 
                 await playlist.createEmbeddedDocuments("PlaylistSound", sounds);
                 ui.notifications.info(`Created playlist "${playlist.name}" with ${sounds.length} tracks.`);
@@ -460,6 +482,11 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
             },
             previewTrack: async function(event, target) {
                 const path = target.dataset.path;
+                const isTtrpg = target.dataset.isTtrpg === "true";
+                
+                if (isTtrpg) {
+                    const trackName = target.closest('li').innerText.trim(); // Fallback or use ID lookup
+                }
                 await playPreview(path, target);
             }
         }
@@ -474,6 +501,7 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
         super(options);
         this.tagSelection = new Map(); 
         this.matchMode = "AND"; 
+        this.includeTTRPG = false;
     }
 
     _getSplitTags() {
@@ -484,6 +512,36 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
             else if (state === -1) excluded.push(tag);
         }
         return { included, excluded };
+    }
+
+    /**
+     * Merge local and TTRPG tracks (if enabled) and apply filters
+     */
+    _getCombinedFilteredTracks(included, excluded) {
+        let pool = [...game.wgtngmTags.allTracks];
+        
+        if (this.includeTTRPG && ttrpgIntegration.isAvailable) {
+            pool = pool.concat(ttrpgIntegration.tracks);
+        }
+        return pool.filter(track => {
+            let trackTags;
+            if (track.isTTRPG) {
+                trackTags = track.tags;
+            } else {
+                trackTags = game.wgtngmTags.getTags(track.path);
+            }
+
+            if (excluded.length > 0 && excluded.some(t => trackTags.includes(t))) return false;
+            
+            if (included.length > 0) {
+                if (this.matchMode === "AND") {
+                    return included.every(t => trackTags.includes(t));
+                } else {
+                    return included.some(t => trackTags.includes(t));
+                }
+            }
+            return true;
+        });
     }
 
     _getFilteredTracks(included, excluded) {
@@ -509,22 +567,47 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
 
         return tracks;
     }
+    
 async _prepareContext(options) {
         const context = await super._prepareContext(options);
         if (game.wgtngmTags.allTracks.length === 0) {
             await game.wgtngmTags.scanLibrary();
         }
 
-        const allTags = game.wgtngmTags.getAllUniqueTags();
+        const allLocalTags = game.wgtngmTags.getAllUniqueTags();
+        let allTagsSet = new Set(allLocalTags);
+        
+        if (this.includeTTRPG && ttrpgIntegration.isAvailable) {
+            ttrpgIntegration.tags.forEach(t => allTagsSet.add(t));
+        }
+            const PRIORITY_TAGS = ["standard", "alternate", "bonus"];
+            
+            const allTags = Array.from(allTagsSet).sort((a, b) => {
+                const indexA = PRIORITY_TAGS.indexOf(a);
+                const indexB = PRIORITY_TAGS.indexOf(b);
+
+                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                if (indexA !== -1) return -1;
+                if (indexB !== -1) return 1;
+                
+                return a.localeCompare(b);
+            });
+
         const { included, excluded } = this._getSplitTags();
         
-        let matchingTracks = this._getFilteredTracks(included, excluded);
-
-        const availableTags = new Set();
-        matchingTracks.forEach(t => {
-            const tags = game.wgtngmTags.getTags(t.path);
-            tags.forEach(tag => availableTags.add(tag));
-        });
+        let matchingTracks = this._getCombinedFilteredTracks(included, excluded);
+        
+        let availableTags = null;
+        if (this.matchMode === "AND") {
+            availableTags = new Set();
+            matchingTracks.forEach(t => {
+                let tags;
+                if (t.isTTRPG) tags = t.tags;
+                else tags = game.wgtngmTags.getTags(t.path);
+                
+                tags.forEach(tag => availableTags.add(tag));
+            });
+        }
         const refinedTagCloud = allTags
             .filter(t => {
                 if (this.matchMode === "OR") return true;
@@ -541,27 +624,43 @@ async _prepareContext(options) {
                     stateClass: stateClass
                 };
             });
+            const currentPreview = game.wgtngmPreviewSound?._previewPath;
+            matchingTracks = matchingTracks.map(t => {
+            let rawTags;
+            let displayPath;
+            
+            if (t.isTTRPG) {
+                rawTags = t.tags;
+                displayPath = ttrpgIntegration.getPath(t, false);
+            } else {
+                rawTags = game.wgtngmTags.getTags(t.path);
+                displayPath = t.path;
+            }
 
-        matchingTracks = matchingTracks.map(t => {
-            const rawTags = game.wgtngmTags.getTags(t.path);
             const formattedTags = rawTags.map(tagName => ({
                 name: tagName,
                 isSelected: included.includes(tagName) 
             }));
+
             return {
                 ...t,
-                tags: formattedTags
+                previewPath: displayPath, 
+                tags: formattedTags,
+                isPlaying: currentPreview === displayPath
             };
         }).sort((a, b) => a.name.localeCompare(b.name));
 
-        context.tags = refinedTagCloud; 
+        context.tags = refinedTagCloud;
         context.previewTracks = matchingTracks;
-        context.hasSelection = this.tagSelection.size > 0; 
-        context.matchMode = this.matchMode; 
-        context.hasTags = allTags.length > 0; 
+        context.hasSelection = this.tagSelection.size > 0;
+        context.matchMode = this.matchMode;
+        context.hasTags = allTags.length > 0;
         
+        // Pass TTRPG availability to template
+        context.showTTRPGToggle = ttrpgIntegration.active;
+        context.ttrpgEnabled = this.includeTTRPG;
+
         return context;
     }
 }
-
 

@@ -27,7 +27,7 @@
                        onkeydown="if(event.key === 'Enter') this.nextElementSibling.click()">
                 <button type="button" data-action="addTag" data-path="{{this.path}}"><i class="fas fa-circle-plus"></i></button>
                 <button type="button" class="preview-btn" data-action="previewTrack" data-path="{{this.path}}" title="Preview Track">
-                    <i class="fas fa-play"></i>
+                    <i class="fas {{#if this.isPlaying}}fa-stop{{else}}fa-play{{/if}}"></i>
                 </button>
             </div>    
         </div>

@@ -12,6 +12,7 @@ import {
 import { PlaylistImporter } from "./importer.js";
 import { wgtngmMiniPlayerSheet } from "./mp-player.js";
 import { wgtngmSoundboardSheet } from "./sb-player.js";
+import { ttrpgIntegration } from "./ttrpg.js";
 Hooks.once("init", async function () {
     console.log("wgtngmMiniPlayer | Initializing");
     const templatePaths = [
@@ -44,6 +45,7 @@ Hooks.once("ready", async function () {
             await game.settings.set("wgtgm-mini-player", "runonlyonce", true);
         }
     }
+    await ttrpgIntegration.init();
     openIfOpened();
 });
 

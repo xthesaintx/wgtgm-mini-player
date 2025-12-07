@@ -300,7 +300,7 @@ static #onToggleFilter(event) {
 static async #onRemoveImage(event){
     if (!event.target.dataset.soundId) return;
     const soundId = event.target.dataset.soundId;
-    console.log(soundId);
+    // console.log(soundId);
     event.preventDefault();
     const playlist = game.playlists.get(this.#currentPlaylistId);
     const sound = playlist?.sounds.get(soundId);
@@ -311,7 +311,7 @@ static async #onRemoveImage(event){
 
 
 static #onMuteAll(event,target) {
-    console.log(this.#isMuted);
+    // console.log(this.#isMuted);
     const playlist = game.playlists.get(this.#currentPlaylistId);
     if (!playlist) return;
 
