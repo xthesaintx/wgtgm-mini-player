@@ -1,3 +1,6 @@
+## 3.1
+- fixed a render race
+
 ## 3.0
 - Added TTRPG Music support
 

@@ -187,14 +187,19 @@ export function openwgtngmSoundboardSheet() {
     game.wgtngmSoundboard.wgtngmSoundboardInstance.render(true);
 }
 
-
 export function checkAndRender(playlist){
+    if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.dontUpdate) return;
+    debouncedRender(playlist);
+}
+
+const debouncedRender = foundry.utils.debounce((playlist) => {
     if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.rendered && playlist.mode !== CONST.PLAYLIST_MODES.DISABLED) {
-        game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.syncState();
         game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render();
     }
     if (game.wgtngmSoundboard.wgtngmSoundboardInstance?.rendered && playlist.mode === CONST.PLAYLIST_MODES.DISABLED) {
         game.wgtngmSoundboard.wgtngmSoundboardInstance.render();
     }
-}
+}, 100);
+
+
 
