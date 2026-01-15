@@ -1,3 +1,6 @@
+## 3.2
+- fixed next track prev track update not working
+
 ## 3.1
 - fixed a render race
 

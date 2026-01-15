@@ -755,17 +755,21 @@ async #updateTagPlaylist() {
         }
     }
 
-    static async #onNextTrack(event) {
+   static async #onNextTrack(event) {
         if (this.#currentPlaylist) {
-            await this.#currentPlaylist.playNext(this.#currentTrack?.id);
+            await this.#currentPlaylist.playNext(null);
+            const playingSound = this.#currentPlaylist.sounds.find(s => s.playing);
+            this.#currentTrack = playingSound;
         }
     }
 
     static async #onPreviousTrack(event) {
         if (this.#currentPlaylist) {
-            await this.#currentPlaylist.playNext(this.#currentTrack?.id, {
+            await this.#currentPlaylist.playNext(null, {
                 direction: -1,
             });
+            const playingSound = this.#currentPlaylist.sounds.find(s => s.playing);
+            this.#currentTrack = playingSound;
         }
     }
 
