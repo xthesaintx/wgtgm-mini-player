@@ -838,15 +838,21 @@ fa-play
     left: auto;
     width: 100%;
     z-index: auto;
+    height: 10px;
+    transition: height 0.3s ease-out;
+
 }
 
 .application.wgtngmMiniPlayer.docked .wgtngm-drawer-content {
-    transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
     box-shadow: none; 
     border-top: 1px solid var(--color-border);
     background: transparent;
     max-height: unset; 
     flex-direction: column-reverse;
+}
+
+.application.wgtngmMiniPlayer.docked .wgtngm-drawer-container.open {
+    height: unset !important;
 }
 
 .application.wgtngmMiniPlayer.docked .tag-toggle {
