@@ -793,3 +793,66 @@ fa-play
 
 
 
+/* Remove window shell properties when docked */
+.application.wgtngmMiniPlayer.docked {
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    position: unset !important;
+    width: 100% !important;
+    min-width: unset !important;
+    max-width: unset !important;
+    min-height: unset !important;
+    margin-bottom: 5px;
+    z-index: 0 !important;
+    border-radius: 0 !important;
+    display: flex;
+    max-height: unset !important;
+}
+
+.application.wgtngmMiniPlayer.docked .window-header {
+    border: none !important;
+    min-height: 20px;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.application.wgtngmMiniPlayer.docked .window-title {
+    display: none;
+}
+
+.application.wgtngmMiniPlayer.docked .window-content {
+    border-radius: 0px;
+    padding: 5px;
+}
+
+
+.application.wgtngmMiniPlayer.docked .wgtngm-mini-player {
+    flex-direction: column-reverse;
+}
+
+.application.wgtngmMiniPlayer.docked .wgtngm-drawer-container {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    z-index: auto;
+}
+
+.application.wgtngmMiniPlayer.docked .wgtngm-drawer-content {
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+    box-shadow: none; 
+    border-top: 1px solid var(--color-border);
+    background: transparent;
+    max-height: unset; 
+    flex-direction: column-reverse;
+}
+
+.application.wgtngmMiniPlayer.docked .tag-toggle {
+        --button-size: 1.5rem;
+}
+
+
+.application.wgtngmMiniPlayer.docked .tag-cloud {
+        max-height: unset;
+}

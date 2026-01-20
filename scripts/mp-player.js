@@ -41,6 +41,8 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
                 handler: this.#toggleTagSelect,
                 buttons: [0, 2],
               },
+            "set-dock": this.#_toggleDock,
+
 
         },
     };
@@ -357,6 +359,51 @@ async _prepareContext(options) {
 
     async _onRender(context, options) {
         await super._onRender(context, options);
+
+        const dockSidebar = game.settings.get(MODULE_NAME, "dockSidebar");
+        const players = document.getElementById("playlists");
+        const directoryHeader = players.querySelector(".global-volume") || players.querySelector(".directory-header");
+        if (directoryHeader) {
+        }            
+        const uiConfig = game.settings.get("core", "uiConfig") || {};
+        const colorScheme = uiConfig.colorScheme;
+        const systemTheme = matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'light';
+        const activeTheme = colorScheme?.interface || systemTheme;
+        const dockedTheme = `theme-${activeTheme}`;
+        
+
+        if (dockSidebar) {
+            if (directoryHeader && directoryHeader.parentNode) {
+                this.element.classList.add("docked", dockedTheme);
+                this.element.style.top = "";
+                this.element.style.left = "";
+                this.element.style.width = "";
+                this.element.style.height = "";
+                this.element.style.position = ""; 
+
+                if (this.element.parentNode !== directoryHeader.parentNode || this.element.previousElementSibling !== directoryHeader) {
+                    directoryHeader.after(this.element);
+                }
+            }
+        } else {
+            this.element.classList.remove("docked");
+            const classesToRemove = [...this.element.classList].filter(c => c.startsWith("theme-"));
+            this.element.classList.remove(...classesToRemove);
+            if (directoryHeader && this.element.parentNode === directoryHeader.parentNode) {
+                document.body.appendChild(this.element);
+            }
+            const saved = game.settings.get(MODULE_NAME, "mpSheetDimensions");
+            if (saved && saved.left && saved.top) {
+                this.setPosition(saved);
+            } else {
+                this.setPosition({ top: 100, left: 100 });
+            }
+
+        }
+
+
+
+
         this._activateListeners(this.element);
         const target = this.element;
         if (!this._resizeObserver) {
@@ -579,6 +626,8 @@ async #updateTagPlaylist() {
   async _renderFrame(options) {
     const frame = await super._renderFrame(options);
     if ( !this.hasFrame ) return frame;
+    const dockedState = game.settings.get(MODULE_NAME, "dockSidebar") ? "window-maximize" : "anchor";
+
     const copyId = `
         <button type="button" class="header-control fa-solid fa-filter icon" data-action="create-taglist"
                 data-tooltip="Create Tag Playlist" aria-label="Create Tag Playlist"></button>
@@ -588,10 +637,20 @@ async #updateTagPlaylist() {
                 data-tooltip="Open Soundboard" aria-label="Open Soundboard"></button>
         <button type="button" class="header-control fa-solid fa-tags icon ${this.#tagMode}" data-action="toggle-tag-mode"
                 data-tooltip="Toggle Tag Mode" aria-label="Toggle Tag Mode"></button>
-      `;
+      <button type="button" class="header-control fa-solid fa-${dockedState} icon" data-action="set-dock"
+              data-tooltip="Toggle dock" aria-label="Toggle dock"></button>`
       this.window.close.insertAdjacentHTML("beforebegin", copyId);
     return frame;
   }
+
+
+static async #_toggleDock(event, target) {
+    const dockedState = game.settings.get(MODULE_NAME, "dockSidebar");
+    await game.settings.set(MODULE_NAME, "dockSidebar", !dockedState);
+    target.classList.toggle("fa-window-maximize", !dockedState);    
+    target.classList.toggle("fa-anchor", dockedState);    
+    this.render(true);
+}
 
     static #editTagList(event){
         new TagEditor().render(true);

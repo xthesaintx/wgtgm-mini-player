@@ -1,4 +1,7 @@
-## 3.2
+## 3.8
+- Added docking mode
+
+## 3.7
 - fixed next track prev track update not working
 
 ## 3.1

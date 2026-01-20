@@ -199,6 +199,20 @@ export default async function miniplayerSettings() {
         default: false,
     });
 
+    game.settings.register("wgtgm-mini-player", "dockSidebar", {
+    name: "Dock to Playlists",
+    hint: "If enabled, the player will be docked to the playlist panel.",
+    scope: "world",
+    config: true,
+    default: false,
+    type: Boolean,
+        onChange: () => {
+             if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.rendered) {
+                 game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render(true);
+             }
+        }
+    });
+
     game.keybindings.register("wgtgm-mini-player", "MiniPlayer", {
       name: "Open the Mini Music Player",
       editable: [
