@@ -202,7 +202,7 @@ export default async function miniplayerSettings() {
     game.settings.register("wgtgm-mini-player", "dockSidebar", {
     name: "Dock to Playlists",
     hint: "If enabled, the player will be docked to the playlist panel.",
-    scope: "world",
+    scope: "client",
     config: true,
     default: false,
     type: Boolean,
