@@ -808,6 +808,7 @@ fa-play
     border-radius: 0 !important;
     display: flex;
     max-height: unset !important;
+    height: unset !important;
 }
 
 .application.wgtngmMiniPlayer.docked .window-header {
