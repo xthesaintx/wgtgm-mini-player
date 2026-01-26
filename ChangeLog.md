@@ -1,4 +1,4 @@
-## 3.9
+## 4.2
 - Soundboard update
 
 ## 3.8
