@@ -62,19 +62,24 @@ Hooks.on("renderChatMessageHTML", (app, html, data) => {
     });
 });
 
+Hooks.on("updatePlaylistSound", (playlist, changes, options, userId) => {
+    checkAndRender(playlist,changes);
+});
+
 Hooks.on("deletePlaylistSound", (playlist, changes, options, userId) => {
-    checkAndRender(playlist);
+    checkAndRender(playlist,changes);
 });
 
 Hooks.on("createPlaylistSound", (playlist, changes, options, userId) => {
-    checkAndRender(playlist);
+    checkAndRender(playlist,changes);
 });
+
 Hooks.on("updatePlaylist", (playlist, changes, options, userId) => {
-    checkAndRender(playlist);
+    checkAndRender(playlist,changes);
  });
 
 Hooks.on("deletePlaylist", (playlist, changes, options, userId) => {
-    checkAndRender(playlist);
+    checkAndRender(playlist,changes);
  });
 
 Hooks.on("renderSceneControls", (app , html , data , s) => {

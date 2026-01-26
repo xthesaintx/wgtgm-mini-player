@@ -51,33 +51,26 @@ export class wgtngmSoundboardSheet extends wgtngmsb {
         const context = await super._prepareContext(options);
         context.isNotMulti = this.#isNotMulti;
         context.isFade = this.#isFade;
+        
         let playlists = game.playlists.filter(p => p.mode === CONST.PLAYLIST_MODES.DISABLED);
         playlists = playlists.filter(p => p.sounds.size > 0);
+        
         if (this.#showEnvironmentOnly) {
             playlists = playlists.filter(p => p.channel === "environment");
         }
         
         this.#playlists = playlists;
+        
         if (this.#currentPlaylistId && !playlists.some(p => p.id === this.#currentPlaylistId)) {
             this.#currentPlaylistId = null;
         }
         if (!this.#currentPlaylistId && playlists.length > 0) {
             this.#currentPlaylistId = playlists[0].id;
         }
-        context.playlists = playlists.map(p => ({ id: p.id, name: p.name, playing: p.playing }));
 
-        const sbCrossfadeEnabled = game.settings.get("wgtgm-mini-player", "enable-sb-crossfade");
-        const crossfadeBaseDuration = game.settings.get("wgtgm-mini-player", "crossfade") * 1000;
-        const finalCrossfadeDuration = sbCrossfadeEnabled ? crossfadeBaseDuration : 1;
-        for (const p of this.#playlists) {
-              await p.update({ fade: finalCrossfadeDuration });
-        }
-
-
-        const currentPlaylist = playlists.find(p => p.id === this.#currentPlaylistId);
-        if (currentPlaylist) {
-            context.sounds = currentPlaylist.playbackOrder.map(soundId => { 
-                const sound = currentPlaylist.sounds.get(soundId); 
+        context.playlists = playlists.map(p => {
+            const sounds = p.playbackOrder.map(soundId => { 
+                const sound = p.sounds.get(soundId); 
                 if (!sound) return null; 
 
                 const image = sound.getFlag("wgtgm-mini-player", "image") || "";
@@ -87,16 +80,36 @@ export class wgtngmSoundboardSheet extends wgtngmsb {
                     playing: sound.playing,
                     image: image && image !== "" ? image : null,
                 };
-            }).filter(Boolean); 
-        } else {
-            context.sounds = [];
-        }
+            }).filter(Boolean);
+
+            return { 
+                id: p.id, 
+                name: p.name, 
+                playing: p.playing,
+                sounds: sounds 
+            };
+        });
+
         context.isMuted = this.#isMuted;
         context.isGM = this.#isGM;
         context.showEnvironmentOnly = this.#showEnvironmentOnly;
         context.resizeAuto = this.#resizeAuto;
         context.currentPlaylistId = this.#currentPlaylistId;
         return context;
+    }
+
+    async _onPlaylistSelect(event) {
+        this.#currentPlaylistId = event.currentTarget.value;
+
+        const grids = this.element.querySelectorAll(".soundboard-grid");
+        grids.forEach(g => g.style.display = "none");
+
+        const activeGrid = this.element.querySelector(`.soundboard-grid[data-playlist-id="${this.#currentPlaylistId}"]`);
+        if (activeGrid) {
+            activeGrid.style.display = "grid";
+        }
+
+        this._resizeWindow();
     }
 
     async close(options) {
@@ -179,7 +192,7 @@ export class wgtngmSoundboardSheet extends wgtngmsb {
                 } else if (trackCount <= 30) {
                     columns = 6;
                     rows = 5;
-                } else { // For more than 16 tracks
+                } else { 
                     columns = 6;
                     rows = Math.ceil(trackCount / columns);
                 }
@@ -194,26 +207,16 @@ export class wgtngmSoundboardSheet extends wgtngmsb {
             }
     }
 
-async _onPlaylistSelect(event) {
-        this.#currentPlaylistId = event.currentTarget.value;
-        this.render();
-    }
-
 
 async _onSoundClick(event, target) {
     if (!event.target.dataset.soundId) return;
     const soundId = event.target.dataset.soundId;
-
-    // const sbCrossfadeEnabled = game.settings.get("wgtgm-mini-player", "enable-sb-crossfade");
-    // const crossfadeBaseDuration = game.settings.get("wgtgm-mini-player", "crossfade") * 1000;
-    // const finalCrossfadeDuration = sbCrossfadeEnabled ? crossfadeBaseDuration : 1;
 
     const playlist = game.playlists.get(this.#currentPlaylistId);
     const sound = playlist?.sounds.get(soundId);
     if (!sound) return;
 
     if (sound.playing) {
-        // await playlist.update({ fade: finalCrossfadeDuration });
         await sound.update({ playing: false });
         target.classList.remove('playing');
     } else {
@@ -221,11 +224,9 @@ async _onSoundClick(event, target) {
             if (this.#isNotMulti) {
                 const playingAndEnabledPlaylists = playlists.filter((p) => p.playing);
                 for (const p of playingAndEnabledPlaylists) {
-                    // await p.update({ fade: finalCrossfadeDuration });
                     await p.stopAll();
                 }
             }
-            // await playlist.update({ fade: finalCrossfadeDuration });
             await playlist.playSound(sound);
     }
 }
@@ -300,7 +301,6 @@ static #onToggleFilter(event) {
 static async #onRemoveImage(event){
     if (!event.target.dataset.soundId) return;
     const soundId = event.target.dataset.soundId;
-    // console.log(soundId);
     event.preventDefault();
     const playlist = game.playlists.get(this.#currentPlaylistId);
     const sound = playlist?.sounds.get(soundId);
@@ -311,7 +311,6 @@ static async #onRemoveImage(event){
 
 
 static #onMuteAll(event,target) {
-    // console.log(this.#isMuted);
     const playlist = game.playlists.get(this.#currentPlaylistId);
     if (!playlist) return;
 
@@ -336,11 +335,9 @@ static #onMuteAll(event,target) {
         }
     }
     this.#isMuted = !this.#isMuted;
-    // {{else}}
     target.classList.toggle('fa-volume-mute', this.#isMuted);
     target.classList.toggle('fa-volume-high', !this.#isMuted);
 
-    // this.render();
 }
 
 }

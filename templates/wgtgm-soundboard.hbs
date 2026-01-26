@@ -18,23 +18,24 @@
             <i class="fas fa-layer-group wgtngm-multi {{#if isNotMulti}}nomulti{{/if}}" data-action="multiSounds" title="Multitrack {{#if isNotMulti}}off{{else}}on{{/if}}"></i>
             <i class="{{#if isMuted}}active{{/if}} fas {{#if isMuted}}fa-volume-mute{{else}}fa-volume-high{{/if}}" data-action="mute-all" title="Mute/Unmute All"></i>
     </div>
-    <div class="soundboard-grid">
-        {{#each sounds}}
+    
+    {{#each playlists}}
+    <div class="soundboard-grid" data-playlist-id="{{this.id}}" {{#unless (eq this.id ../currentPlaylistId)}}style="display:none"{{/unless}}>
+        {{#each this.sounds}}
         <div class="sound-button-container">
-        <button class="sound-button {{#if this.playing}}playing{{/if}}" data-sound-id="{{this.id}}" title="{{this.name}}" data-action="sb-click">
-            {{#if this.image}}
-            <img src="{{this.image}}" alt="{{this.name}}">
-            {{#if ../isGM}}
-                 <button type="button" class="remove-image-button" data-sound-id="{{id}}" title="Remove Image" data-action="remove-image">
-                     <i class="fas fa-times-circle"></i>
-                 </button>
-            {{/if}}
-            {{else}}{{this.name}}
-            {{/if}}
-
-        </button>
-    </div>
+            <button class="sound-button {{#if this.playing}}playing{{/if}}" data-sound-id="{{this.id}}" title="{{this.name}}" data-action="sb-click">
+                {{#if this.image}}
+                <img src="{{this.image}}" alt="{{this.name}}">
+                {{#if ../../isGM}}
+                     <button type="button" class="remove-image-button" data-sound-id="{{this.id}}" title="Remove Image" data-action="remove-image">
+                         <i class="fas fa-times-circle"></i>
+                     </button>
+                {{/if}}
+                {{else}}{{this.name}}
+                {{/if}}
+            </button>
+        </div>
         {{/each}}
-
     </div>
+    {{/each}}
 </div>

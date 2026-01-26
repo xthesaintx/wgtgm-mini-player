@@ -1,3 +1,6 @@
+## 3.9
+- Soundboard update
+
 ## 3.8
 - Added docking mode
 
