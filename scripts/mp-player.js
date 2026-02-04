@@ -1,7 +1,7 @@
 import { localize, format, formatTimestamp, openwgtngmSoundboardSheet } from "./helper.js";
-import { TagEditor, TagPlaylistGenerator } from "./tags.js"; 
+import { TagEditor, TagPlaylistGenerator } from "./tags.js";
 import { MODULE_NAME } from "./settings.js";
-import { ttrpgIntegration } from "./ttrpg.js"; 
+import { ttrpgIntegration } from "./ttrpg.js";
 var SearchFilter = foundry.applications.ux.SearchFilter;
 
 var ApplicationV2 = foundry.applications.api.ApplicationV2;
@@ -40,7 +40,7 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
             "toggle-tag-select": {
                 handler: this.#toggleTagSelect,
                 buttons: [0, 2],
-              },
+            },
             "set-dock": this.#_toggleDock,
 
 
@@ -60,21 +60,25 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
     #includeTTRPG = game.settings.get("wgtgm-mini-player", "ttrpgSourceEnabled") ?? false;
     #tagPlaylistName = "taglist-miniPlayer";
     dontUpdate = false;
+    positionDirty = false;
 
     static PARTS = {
         main: {
-            template: "modules/wgtgm-mini-player/templates/wgtgm-mini-player.hbs", scrollable: ["",".scrollable",".tag-cloud"] 
+            template: "modules/wgtgm-mini-player/templates/wgtgm-mini-player.hbs", scrollable: ["", ".scrollable", ".tag-cloud"]
         },
     };
 
+    setPosition(options = {}) {
+        const position = super.setPosition(options);
+        this.positionDirty = true;
+        return position;
+    }
+
     async close(options) {
-        const { width, height, left, top } = this.position;
-        game.settings.set("wgtgm-mini-player", "mpSheetDimensions", {
-            width,
-            height,
-            left,
-            top,
-        });
+        if (this.positionDirty || this.position) {
+            const { width, height, left, top } = this.position;
+            game.settings.set("wgtgm-mini-player", "mpSheetDimensions", { width, height, left, top });
+        }
         const currentStates = game.settings.get("wgtgm-mini-player", "mpSbOpened");
         game.settings.set("wgtgm-mini-player", "mpSbOpened", {
             ...currentStates,
@@ -85,7 +89,7 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         return super.close(options);
     }
 
-async _prepareContext(options) {
+    async _prepareContext(options) {
         const favoritePlaylistName = "favorites-miniPlayer";
         const favoritesPlaylist = game.playlists.find(p => p.name === favoritePlaylistName);
         const favoritePaths = new Set(favoritesPlaylist ? favoritesPlaylist.sounds.map(s => s.path) : []);
@@ -94,9 +98,9 @@ async _prepareContext(options) {
             if (game.wgtngmTags.allTracks.length === 0) await game.wgtngmTags.scanLibrary();
 
             const allUniqueTags = new Set(game.wgtngmTags.getAllUniqueTags());
-            
+
             if (this.#includeTTRPG && ttrpgIntegration.isAvailable) {
-                 ttrpgIntegration.tags.forEach(t => allUniqueTags.add(t));
+                ttrpgIntegration.tags.forEach(t => allUniqueTags.add(t));
             }
 
             let stateChanged = false;
@@ -124,17 +128,17 @@ async _prepareContext(options) {
                     this.#currentTrack = playingSound || this.#currentPlaylist.playbackOrder.map(id => this.#currentPlaylist.sounds.get(id))[0] || null;
                 }
             }
-            
+
             const filteredTracks = this.#getCombinedFilteredTracks();
-            
+
             let availableTags = new Set();
-            
+
             if (this.#matchMode === "AND") {
                 filteredTracks.forEach(t => {
                     let tags;
                     if (t.isTTRPG) tags = t.tags;
                     else tags = game.wgtngmTags.getTags(t.path);
-                    
+
                     tags.forEach(tag => availableTags.add(tag));
                 });
             }
@@ -145,14 +149,14 @@ async _prepareContext(options) {
                 ttrpgIntegration.tags.forEach(t => allTagsSet.add(t));
             }
             const PRIORITY_TAGS = ["standard", "alternate", "bonus"];
-            
+
             const allTags = Array.from(allTagsSet).sort((a, b) => {
                 const indexA = PRIORITY_TAGS.indexOf(a);
                 const indexB = PRIORITY_TAGS.indexOf(b);
                 if (indexA !== -1 && indexB !== -1) return indexA - indexB;
                 if (indexA !== -1) return -1;
                 if (indexB !== -1) return 1;
-            return a.localeCompare(b);
+                return a.localeCompare(b);
             });
 
 
@@ -175,25 +179,25 @@ async _prepareContext(options) {
             context.tagMode = true;
             context.tags = tagCloud;
             context.matchMode = this.#matchMode;
-            
+
             context.showTTRPGToggle = ttrpgIntegration.active;
             context.ttrpgEnabled = this.#includeTTRPG;
 
             let tracks = [];
             if (this.#currentPlaylist) {
-                 tracks = this.#currentPlaylist.playbackOrder
-                .map(id => this.#currentPlaylist.sounds.get(id))
-                .filter(Boolean)
-                .map(s => ({
-                    id: s.id,
-                    name: s.name,
-                    repeat: s.repeat,
-                    volume: s.volume,
-                    isMuted: s.volume === 0,
-                    playing: s.playing,
-                    isSelected: s.id === this.#currentTrack?.id,
-                    isFavorite: favoritePaths.has(s.path)
-                }));
+                tracks = this.#currentPlaylist.playbackOrder
+                    .map(id => this.#currentPlaylist.sounds.get(id))
+                    .filter(Boolean)
+                    .map(s => ({
+                        id: s.id,
+                        name: s.name,
+                        repeat: s.repeat,
+                        volume: s.volume,
+                        isMuted: s.volume === 0,
+                        playing: s.playing,
+                        isSelected: s.id === this.#currentTrack?.id,
+                        isFavorite: favoritePaths.has(s.path)
+                    }));
             }
             context.tracks = tracks;
 
@@ -201,7 +205,7 @@ async _prepareContext(options) {
             return context;
         }
 
-        const filteredPlaylists = this.#getFilteredPlaylists();    
+        const filteredPlaylists = this.#getFilteredPlaylists();
         if (this.#currentPlaylist && filteredPlaylists.some((p) => p.id === this.#currentPlaylist.id)) {
             if (!this.#currentTrack || !this.#currentPlaylist.sounds.has(this.#currentTrack?.id)) {
                 this.#currentTrack = this.#currentPlaylist.playbackOrder.map(id => this.#currentPlaylist.sounds.get(id))[0] ?? null;
@@ -212,20 +216,20 @@ async _prepareContext(options) {
                 this.#currentPlaylist = playingSound.parent;
                 this.#currentTrack = playingSound;
             } else {
-                 const lastPlayed = game.settings.get("wgtgm-mini-player", "lastPlayedTrack");
-                 let lastPlayedPlaylist = lastPlayed ? game.playlists.get(lastPlayed.playlistId) : null;
-                 if (lastPlayedPlaylist && filteredPlaylists.some((p) => p.id === lastPlayedPlaylist.id)) {
-                     this.#currentPlaylist = lastPlayedPlaylist;
-                     this.#currentTrack = this.#currentPlaylist.sounds.get(lastPlayed.trackId);
-                 } else {
-                     this.#currentPlaylist = filteredPlaylists[0] ?? null;
-                     this.#currentTrack = null;
-                 }
+                const lastPlayed = game.settings.get("wgtgm-mini-player", "lastPlayedTrack");
+                let lastPlayedPlaylist = lastPlayed ? game.playlists.get(lastPlayed.playlistId) : null;
+                if (lastPlayedPlaylist && filteredPlaylists.some((p) => p.id === lastPlayedPlaylist.id)) {
+                    this.#currentPlaylist = lastPlayedPlaylist;
+                    this.#currentTrack = this.#currentPlaylist.sounds.get(lastPlayed.trackId);
+                } else {
+                    this.#currentPlaylist = filteredPlaylists[0] ?? null;
+                    this.#currentTrack = null;
+                }
             }
         }
-        
+
         if (this.#currentPlaylist && !this.#currentTrack) {
-             this.#currentTrack = this.#currentPlaylist.playbackOrder.map(id => this.#currentPlaylist.sounds.get(id))[0] ?? null;
+            this.#currentTrack = this.#currentPlaylist.playbackOrder.map(id => this.#currentPlaylist.sounds.get(id))[0] ?? null;
         }
 
         const context = await super._prepareContext(options);
@@ -261,7 +265,7 @@ async _prepareContext(options) {
 
     #prepareCommonContext(context, favoritesPlaylist) {
         context.nowPlaying = this.#currentTrack?.name ?? "None";
-        this.window.title = this.#currentTrack?.name ?? "Mini Player"; 
+        this.window.title = this.#currentTrack?.name ?? "Mini Player";
         const nextSound = this.#currentPlaylist?._getNextSound(this.#currentTrack?.id);
         context.nextUp = nextSound?.name ?? "End of Playlist";
         context.isPlaying = this.#currentTrack?.playing ?? false;
@@ -274,8 +278,8 @@ async _prepareContext(options) {
             const path = this.#currentTrack.path;
             currentTrackTags = game.wgtngmTags.getTags(path);
             if (currentTrackTags.length === 0 && ttrpgIntegration.active && ttrpgIntegration.isAvailable) {
-                const ttrpgTrack = ttrpgIntegration.tracks.find(t => 
-                    ttrpgIntegration.getPath(t, false) === path || 
+                const ttrpgTrack = ttrpgIntegration.tracks.find(t =>
+                    ttrpgIntegration.getPath(t, false) === path ||
                     ttrpgIntegration.getPath(t, true) === path
                 );
                 if (ttrpgTrack) currentTrackTags = ttrpgTrack.tags;
@@ -289,20 +293,20 @@ async _prepareContext(options) {
         }
 
         if (volume === 0 && !this.#isMuted) {
-            this.#isMuted = true; 
+            this.#isMuted = true;
         } else if (volume > 0 && this.#isMuted) {
-            this.#isMuted = false; 
+            this.#isMuted = false;
         }
-        
-        context.isMuted = this.#isMuted; 
-        context.volume = this.#isMuted ? 0 : volume; 
+
+        context.isMuted = this.#isMuted;
+        context.volume = this.#isMuted ? 0 : volume;
 
         if (!this.#isMuted && volume > 0) {
             this.#previousVolume = volume;
         }
 
         let isFavorite = false;
-        const soundPath = this.#currentTrack?.path; 
+        const soundPath = this.#currentTrack?.path;
         if (favoritesPlaylist && soundPath) {
             isFavorite = favoritesPlaylist.sounds.some(s => s.path === soundPath);
         }
@@ -316,7 +320,7 @@ async _prepareContext(options) {
         target.classList.toggle('true', this.#tagMode);
 
         await game.settings.set("wgtgm-mini-player", "lastTagMode", this.#tagMode);
-        
+
         if (this.#tagMode) {
             game.settings.set("wgtgm-mini-player", "mpDrawerOpen", true);
             if (game.wgtngmTags.allTracks.length === 0) await game.wgtngmTags.scanLibrary();
@@ -344,7 +348,7 @@ async _prepareContext(options) {
 
         if (next === 0) app.#tagSelection.delete(tag);
         else app.#tagSelection.set(tag, next);
-        
+
         await game.settings.set("wgtgm-mini-player", "tagSelectionState", Array.from(app.#tagSelection.entries()));
 
         await app.#updateTagPlaylist();
@@ -359,18 +363,40 @@ async _prepareContext(options) {
 
     async _onRender(context, options) {
         await super._onRender(context, options);
+        this._activateListeners(this.element);
 
+        const target = this.element;
+        if (!this._resizeObserver) {
+
+
+            this._resizeObserver = new ResizeObserver((entries) => {
+                for (const entry of entries) {
+                    const { width, height } = entry.contentRect;
+                    if (height < 145) {
+                        target.classList.remove("pre-compact-mode");
+                        target.classList.add("compact-mode");
+                    } else if (height < 165) {
+                        target.classList.add("pre-compact-mode");
+                    } else {
+                        target.classList.remove("pre-compact-mode");
+                        target.classList.remove("compact-mode");
+                    }
+                    this.positionDirty = true;
+                }
+            });
+            this._resizeObserver.observe(this.element);
+        }
         const dockSidebar = game.settings.get(MODULE_NAME, "dockSidebar");
         const players = document.getElementById("playlists");
         const directoryHeader = players.querySelector(".global-volume") || players.querySelector(".directory-header");
         if (directoryHeader) {
-        }            
+        }
         const uiConfig = game.settings.get("core", "uiConfig") || {};
         const colorScheme = uiConfig.colorScheme;
         const systemTheme = matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'light';
         const activeTheme = colorScheme?.interface || systemTheme;
         const dockedTheme = `theme-${activeTheme}`;
-        
+
 
         if (dockSidebar) {
             if (directoryHeader && directoryHeader.parentNode) {
@@ -379,7 +405,7 @@ async _prepareContext(options) {
                 this.element.style.left = "";
                 this.element.style.width = "";
                 this.element.style.height = "";
-                this.element.style.position = ""; 
+                this.element.style.position = "";
 
                 if (this.element.parentNode !== directoryHeader.parentNode || this.element.previousElementSibling !== directoryHeader) {
                     directoryHeader.after(this.element);
@@ -394,6 +420,7 @@ async _prepareContext(options) {
             }
             const saved = game.settings.get(MODULE_NAME, "mpSheetDimensions");
             if (saved && saved.left && saved.top) {
+
                 this.setPosition(saved);
             } else {
                 this.setPosition({ top: 100, left: 100 });
@@ -404,35 +431,11 @@ async _prepareContext(options) {
 
 
 
-        this._activateListeners(this.element);
-        const target = this.element;
-        if (!this._resizeObserver) {
-            const debouncedSave = foundry.utils.debounce((width, height) => {
-                const { left, top } = this.position;
-                game.settings.set("wgtgm-mini-player", "mpSheetDimensions", { width, height, left, top });
-            }, 300);
 
-            this._resizeObserver = new ResizeObserver((entries) => {
-                for (const entry of entries) {
-                    const { width, height } = entry.contentRect;
-                    if (height < 145) {
-                        target.classList.remove("pre-compact-mode");
-                        target.classList.add("compact-mode");
-                    } else if (height < 165) {
-                        target.classList.add("pre-compact-mode");
-                    } else {
-                        target.classList.remove("pre-compact-mode");
-                        target.classList.remove("compact-mode");
-                    }
-                    debouncedSave(width, height);
-                }
-            });
-            this._resizeObserver.observe(this.element);
-        }
     }
 
     _activateListeners(html) {
-       if (!this.#tagMode) html.querySelector("#playlist-select").addEventListener("change", this._onPlaylistSelect.bind(this));
+        if (!this.#tagMode) html.querySelector("#playlist-select").addEventListener("change", this._onPlaylistSelect.bind(this));
         html.querySelector("#track-select").addEventListener("change", this._onTrackSelect.bind(this));
         html.querySelector('input[name="volume"]').addEventListener("input", this._onVolumeChange.bind(this));
         html.querySelector('[data-action="toggle-mute"]').addEventListener("click", this.#onToggleMute.bind(this));
@@ -441,7 +444,7 @@ async _prepareContext(options) {
 
     #getCombinedFilteredTracks() {
         let pool = [...game.wgtngmTags.allTracks];
-        
+
         if (this.#includeTTRPG && ttrpgIntegration.isAvailable) {
             pool = pool.concat(ttrpgIntegration.tracks);
         }
@@ -481,7 +484,7 @@ async _prepareContext(options) {
     static async #toggleTTRPG(event, target) {
         const app = game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance;
         if (!app) return;
-        
+
         if (!ttrpgIntegration.active) {
             ui.notifications.warn("TTRPG Music module is not active or linked.");
             return;
@@ -493,22 +496,22 @@ async _prepareContext(options) {
         app.render();
     }
 
-syncState() {
+    syncState() {
         this.render();
     }
 
-async #updateTagPlaylist() {
+    async #updateTagPlaylist() {
         this.dontUpdate = true;
         try {
-            const filteredTracks = this.#getCombinedFilteredTracks(); 
-            const sortedFiltered = filteredTracks.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true}));
+            const filteredTracks = this.#getCombinedFilteredTracks();
+            const sortedFiltered = filteredTracks.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
             const MAX_TRACKS = game.settings.get("wgtgm-mini-player", "maxTrackCount");
-            const limitedTracks = sortedFiltered.slice(0, MAX_TRACKS); 
+            const limitedTracks = sortedFiltered.slice(0, MAX_TRACKS);
 
             const crossfadeBaseDuration = game.settings.get("wgtgm-mini-player", "crossfade") * 1000;
             const enableCrossfade = game.settings.get("wgtgm-mini-player", "enable-crossfade");
-            const fadeDuration = enableCrossfade ? crossfadeBaseDuration : 1;        
-            
+            const fadeDuration = enableCrossfade ? crossfadeBaseDuration : 1;
+
             let playlist = game.playlists.find(p => p.name === this.#tagPlaylistName);
             if (!playlist) {
                 playlist = await Playlist.create({
@@ -516,7 +519,7 @@ async #updateTagPlaylist() {
                     mode: CONST.PLAYLIST_MODES.SEQUENTIAL,
                     description: "Dynamically generated by Mini Player Tag Mode",
                     flags: { [MODULE_NAME]: { tagPlaylist: true } },
-                    fade: fadeDuration 
+                    fade: fadeDuration
                 });
             } else {
                 if (playlist.fade !== fadeDuration) {
@@ -527,7 +530,7 @@ async #updateTagPlaylist() {
             const shouldLoop = game.settings.get("wgtgm-mini-player", "set-music-to-loop");
 
             const validPaths = new Set();
-            
+
             limitedTracks.forEach(t => {
                 if (t.isTTRPG) {
                     validPaths.add(ttrpgIntegration.getPath(t, shouldLoop));
@@ -538,7 +541,7 @@ async #updateTagPlaylist() {
 
             const soundsToDelete = [];
             const playingSound = playlist.sounds.find(s => s.playing);
-            
+
             for (const sound of playlist.sounds) {
                 if (sound.playing && validPaths.has(sound.path)) {
                     continue;
@@ -573,13 +576,12 @@ async #updateTagPlaylist() {
             if (soundsToAdd.length > 0) {
                 await playlist.createEmbeddedDocuments("PlaylistSound", soundsToAdd);
             }
-            
+
             this.#currentPlaylist = playlist;
             const newPlaying = playlist.sounds.find(s => s.playing);
             this.#currentTrack = newPlaying || playlist.sounds.contents[0] || null;
         }
-        finally
-        {
+        finally {
             this.dontUpdate = false;
         }
     }
@@ -587,8 +589,15 @@ async #updateTagPlaylist() {
 
     _updateTimestamps() {
         if (!this.element) return;
+
+        if (this.positionDirty) {
+            this.positionDirty = false;
+            const { width, height, left, top } = this.position;
+            game.settings.set("wgtgm-mini-player", "mpSheetDimensions", { width, height, left, top });
+        }
+
         const playlist = game.playlists.get(this.#currentPlaylist?.id);
-        const sound = playlist?.sounds.get(this.#currentTrack?.id); 
+        const sound = playlist?.sounds.get(this.#currentTrack?.id);
         const currentTimeEl = this.element.querySelector(".wgtngm-current-time");
         const durationTimeEl = this.element.querySelector(".wgtngm-duration-time");
         if (sound?.sound?.loaded) {
@@ -604,7 +613,7 @@ async #updateTagPlaylist() {
     }
 
 
- 
+
 
     #getFilteredPlaylists() {
         return game.playlists.filter((p) => p.mode !== CONST.PLAYLIST_MODES.DISABLED && p.sounds.size > 0);
@@ -622,13 +631,13 @@ async #updateTagPlaylist() {
 
     }
 
-  /** @inheritDoc */
-  async _renderFrame(options) {
-    const frame = await super._renderFrame(options);
-    if ( !this.hasFrame ) return frame;
-    const dockedState = game.settings.get(MODULE_NAME, "dockSidebar") ? "window-maximize" : "anchor";
+    /** @inheritDoc */
+    async _renderFrame(options) {
+        const frame = await super._renderFrame(options);
+        if (!this.hasFrame) return frame;
+        const dockedState = game.settings.get(MODULE_NAME, "dockSidebar") ? "window-maximize" : "anchor";
 
-    const copyId = `
+        const copyId = `
         <button type="button" class="header-control fa-solid fa-filter icon" data-action="create-taglist"
                 data-tooltip="Create Tag Playlist" aria-label="Create Tag Playlist"></button>
         <button type="button" class="header-control fa-solid fa-tag icon" data-action="edit-taglist"
@@ -639,24 +648,24 @@ async #updateTagPlaylist() {
                 data-tooltip="Toggle Tag Mode" aria-label="Toggle Tag Mode"></button>
       <button type="button" class="header-control fa-solid fa-${dockedState} icon" data-action="set-dock"
               data-tooltip="Toggle dock" aria-label="Toggle dock"></button>`
-      this.window.close.insertAdjacentHTML("beforebegin", copyId);
-    return frame;
-  }
+        this.window.close.insertAdjacentHTML("beforebegin", copyId);
+        return frame;
+    }
 
 
-static async #_toggleDock(event, target) {
-    const dockedState = game.settings.get(MODULE_NAME, "dockSidebar");
-    await game.settings.set(MODULE_NAME, "dockSidebar", !dockedState);
-    target.classList.toggle("fa-window-maximize", !dockedState);    
-    target.classList.toggle("fa-anchor", dockedState);    
-    this.render(true);
-}
+    static async #_toggleDock(event, target) {
+        const dockedState = game.settings.get(MODULE_NAME, "dockSidebar");
+        await game.settings.set(MODULE_NAME, "dockSidebar", !dockedState);
+        target.classList.toggle("fa-window-maximize", !dockedState);
+        target.classList.toggle("fa-anchor", dockedState);
+        this.render(true);
+    }
 
-    static #editTagList(event){
+    static #editTagList(event) {
         new TagEditor().render(true);
     }
 
-    static #createTaglist(event){
+    static #createTaglist(event) {
         new TagPlaylistGenerator().render(true);
     }
 
@@ -675,7 +684,7 @@ static async #_toggleDock(event, target) {
         this.#currentPlaylist = newPlaylist;
         this.#currentTrack = this.#currentPlaylist?.playbackOrder.map(id => this.#currentPlaylist.sounds.get(id))[0] ?? null;
         const playingSound = newPlaylist.playing ? newPlaylist.sounds.find(s => s.playing) : null;
-            if (playingSound) {
+        if (playingSound) {
             this.#currentTrack = playingSound;
         } else {
             this.#currentTrack = this.#currentPlaylist?.playbackOrder.map(id => this.#currentPlaylist.sounds.get(id))[0] ?? null;
@@ -683,7 +692,7 @@ static async #_toggleDock(event, target) {
         this.render();
     }
 
-    #crossFadeLength(){
+    #crossFadeLength() {
         const CrossfadeEnabled = game.settings.get("wgtgm-mini-player", "enable-crossfade");
         const crossfadeBaseDuration = game.settings.get("wgtgm-mini-player", "crossfade") * 1000;
         const finalCrossfadeDuration = CrossfadeEnabled ? crossfadeBaseDuration : 1;
@@ -703,7 +712,7 @@ static async #_toggleDock(event, target) {
                     await p.stopAll();
                 }
             }
-        } 
+        }
         if (game.settings.get("wgtgm-mini-player", "play-on-select")) {
             await this.#currentPlaylist.playSound(this.#currentTrack);
         } else {
@@ -732,72 +741,73 @@ static async #_toggleDock(event, target) {
         this.render();
     }
 
-    static async #setLoop(event){
-       const targetSound =
+    static async #setLoop(event) {
+        const targetSound =
             this.#currentTrack ??
             game.playlists.playing.find((p) => p.sounds.some((s) => s.playing))?.sounds.find((s) => s.playing);
         if (!targetSound) return;
         await targetSound.update({ repeat: !targetSound.repeat });
         const drawer = event.target;
         if (!drawer) return;
-        if (!targetSound.repeat){drawer.classList.remove("open");}
-        else{
-        drawer.classList.add("open");}
+        if (!targetSound.repeat) { drawer.classList.remove("open"); }
+        else {
+            drawer.classList.add("open");
+        }
         this.render();
     }
 
-    static async #setFavorite(event){
-            const targetSound =
-                this.#currentTrack ??
-                game.playlists.playing.find((p) => p.sounds.some((s) => s.playing))?.sounds.find((s) => s.playing);
-                
-            if (!targetSound) {
-                 ui.notifications.warn("No track selected to favorite.");
-                 return;
-            }
-            
-            const favoritePlaylistName = "favorites-miniPlayer";
-            let favoritesPlaylist = game.playlists.find(p => p.name === favoritePlaylistName);
+    static async #setFavorite(event) {
+        const targetSound =
+            this.#currentTrack ??
+            game.playlists.playing.find((p) => p.sounds.some((s) => s.playing))?.sounds.find((s) => s.playing);
 
-            if (!favoritesPlaylist) {
-                try {
-                    favoritesPlaylist = await Playlist.create({
-                        name: favoritePlaylistName,
-                        mode: CONST.PLAYLIST_MODES.SEQUENTIAL,
-                    });
-                     ui.notifications.info(`Created playlist: ${favoritePlaylistName}`);
-                } catch (err) {
-                    console.error("Mini Player | Failed to create favorites playlist", err);
-                    ui.notifications.error("Failed to create favorites playlist.");
-                    return;
-                }
-            }
-
-
-            const existingSound = favoritesPlaylist.sounds.find(s => s.path === targetSound.path);
-
-            try {
-                if (existingSound) {
-                    await favoritesPlaylist.deleteEmbeddedDocuments("PlaylistSound", [existingSound.id]);
-                    ui.notifications.info(`Removed "${targetSound.name}" from favorites.`);
-                } else {
-                    const soundData = {
-                        name: targetSound.name,
-                        path: targetSound.path,
-                        repeat: false, 
-                        volume: targetSound.volume,
-                        flags: { ...targetSound.flags } 
-                    };
-                    await favoritesPlaylist.createEmbeddedDocuments("PlaylistSound", [soundData]);
-                    ui.notifications.info(`Added "${targetSound.name}" to favorites.`);
-                }
-            } catch (err) {
-                 console.error("Mini Player | Failed to update favorites playlist", err);
-                 ui.notifications.error("Failed to update favorites playlist.");
-            }
-            
-            this.render();
+        if (!targetSound) {
+            ui.notifications.warn("No track selected to favorite.");
+            return;
         }
+
+        const favoritePlaylistName = "favorites-miniPlayer";
+        let favoritesPlaylist = game.playlists.find(p => p.name === favoritePlaylistName);
+
+        if (!favoritesPlaylist) {
+            try {
+                favoritesPlaylist = await Playlist.create({
+                    name: favoritePlaylistName,
+                    mode: CONST.PLAYLIST_MODES.SEQUENTIAL,
+                });
+                ui.notifications.info(`Created playlist: ${favoritePlaylistName}`);
+            } catch (err) {
+                console.error("Mini Player | Failed to create favorites playlist", err);
+                ui.notifications.error("Failed to create favorites playlist.");
+                return;
+            }
+        }
+
+
+        const existingSound = favoritesPlaylist.sounds.find(s => s.path === targetSound.path);
+
+        try {
+            if (existingSound) {
+                await favoritesPlaylist.deleteEmbeddedDocuments("PlaylistSound", [existingSound.id]);
+                ui.notifications.info(`Removed "${targetSound.name}" from favorites.`);
+            } else {
+                const soundData = {
+                    name: targetSound.name,
+                    path: targetSound.path,
+                    repeat: false,
+                    volume: targetSound.volume,
+                    flags: { ...targetSound.flags }
+                };
+                await favoritesPlaylist.createEmbeddedDocuments("PlaylistSound", [soundData]);
+                ui.notifications.info(`Added "${targetSound.name}" to favorites.`);
+            }
+        } catch (err) {
+            console.error("Mini Player | Failed to update favorites playlist", err);
+            ui.notifications.error("Failed to update favorites playlist.");
+        }
+
+        this.render();
+    }
 
     static async #onStopTrack(event) {
         if (this.#currentTrack && this.#currentPlaylist) {
@@ -814,7 +824,7 @@ static async #_toggleDock(event, target) {
         }
     }
 
-   static async #onNextTrack(event) {
+    static async #onNextTrack(event) {
         if (this.#currentPlaylist) {
             await this.#currentPlaylist.playNext(null);
             const playingSound = this.#currentPlaylist.sounds.find(s => s.playing);
@@ -859,7 +869,7 @@ static async #_toggleDock(event, target) {
             await targetSound.update({ volume: this.#previousVolume });
             this.#isMuted = false;
         } else {
-            this.#previousVolume = targetSound.volume > 0 ? targetSound.volume : 0.5; 
+            this.#previousVolume = targetSound.volume > 0 ? targetSound.volume : 0.5;
             await targetSound.update({ volume: 0 });
             this.#isMuted = true;
         }

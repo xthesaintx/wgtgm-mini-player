@@ -1,3 +1,6 @@
+## 4.3
+- some window position fixes
+
 ## 4.2
 - Soundboard update
 
