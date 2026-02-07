@@ -1,7 +1,7 @@
 import { MODULE_NAME } from "./settings.js";
 import { formatTrackName } from "./importer.js";
 import { confirmationDialog } from "./helper.js";
-import { ttrpgIntegration } from "./ttrpg.js"; // Import the singleton
+import { ttrpgIntegration } from "./ttrpg.js"; 
 const AUDIO_EXTENSIONS = new Set(Object.keys(CONST.AUDIO_FILE_EXTENSIONS).map(e => `.${e.toLowerCase()}`));
 const FilePicker = foundry.applications.apps.FilePicker.implementation;
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -76,7 +76,7 @@ export class TagManager {
     constructor() {
         this.tags = game.settings.get(MODULE_NAME, "trackTags") || {};
 
-        // Safety check: Ensure tags is an object, not an array or a primitive
+        
         if (!this.tags || typeof this.tags !== "object" || Array.isArray(this.tags)) {
             console.warn("Mini Player | Tag database is corrupted or invalid format. Resetting to empty object.");
             this.tags = {};
@@ -122,7 +122,7 @@ export class TagManager {
                 await this._scanRecursive(dir, fileList);
             }
         } catch (e) {
-            // console.error("Mini Player Tag Scan Error:", e);
+            
         }
     }
 
@@ -249,20 +249,20 @@ export class TagManager {
         let validPaths = 0;
 
         for (const [path, tags] of Object.entries(importedData)) {
-            // The expected format is { "path/to/file": ["tag1", "tag2"] }
-            // If tags is not an array, or path is obviously not a string, skip.
+            
+            
             if (!Array.isArray(tags) || typeof path !== "string") {
                 skipped++;
                 continue;
             }
 
-            // Sanitize tags: must be strings, non-empty, trimmed
+            
             const cleanTags = tags
                 .filter(t => typeof t === "string" && t.trim().length > 0)
                 .map(t => t.trim().toLowerCase());
 
             if (cleanTags.length > 0) {
-                sanitized[path] = [...new Set(cleanTags)]; // Deduplicate
+                sanitized[path] = [...new Set(cleanTags)]; 
                 validPaths++;
             } else {
                 skipped++;
@@ -453,15 +453,15 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
                     let next = 0;
 
                     if (event.button === 2) {
-                        // Right Click: Toggle Exclude (-1)
-                        if (current === -1) next = 0;      // Exclude -> Neutral
-                        else if (current === 0) next = -1; // Neutral -> Exclude
-                        else next = 0;                     // Include -> Neutral
+                        
+                        if (current === -1) next = 0;      
+                        else if (current === 0) next = -1; 
+                        else next = 0;                     
                     } else {
-                        // Left Click: Toggle Include (1)
-                        if (current === 0) next = 1;       // Neutral -> Include
-                        else if (current === 1) next = 0;  // Include -> Neutral
-                        else next = 0;                     // Exclude -> Neutral
+                        
+                        if (current === 0) next = 1;       
+                        else if (current === 1) next = 0;  
+                        else next = 0;                     
                     }
 
                     if (next === 0) this.tagSelection.delete(tag);
@@ -469,7 +469,7 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
 
                     this.render();
                 },
-                buttons: [0, 2] // Enable Left (0) and Right (2) clicks
+                buttons: [0, 2] 
             },
             toggleTTRPG: function () {
                 if (!ttrpgIntegration.active) return;
@@ -505,7 +505,7 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
                 });
 
                 const sounds = matchingTracks.map(t => {
-                    // Resolve Path: Local file or TTRPG URL
+                    
                     let path = t.path;
                     if (t.isTTRPG) {
                         path = ttrpgIntegration.getPath(t, shouldLoop);
@@ -528,7 +528,7 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
                 const isTtrpg = target.dataset.isTtrpg === "true";
 
                 if (isTtrpg) {
-                    const trackName = target.closest('li').innerText.trim(); // Fallback or use ID lookup
+                    const trackName = target.closest('li').innerText.trim(); 
                 }
                 await playPreview(path, target);
             }
@@ -699,7 +699,7 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
         context.matchMode = this.matchMode;
         context.hasTags = allTags.length > 0;
 
-        // Pass TTRPG availability to template
+        
         context.showTTRPGToggle = ttrpgIntegration.active;
         context.ttrpgEnabled = this.includeTTRPG;
 
