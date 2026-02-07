@@ -1,9 +1,9 @@
 import { MODULE_NAME } from "./settings.js";
-import { formatTrackName } from "./importer.js"; 
+import { formatTrackName } from "./importer.js";
 import { confirmationDialog } from "./helper.js";
 import { ttrpgIntegration } from "./ttrpg.js"; // Import the singleton
 const AUDIO_EXTENSIONS = new Set(Object.keys(CONST.AUDIO_FILE_EXTENSIONS).map(e => `.${e.toLowerCase()}`));
-const FilePicker =foundry.applications.apps.FilePicker.implementation;
+const FilePicker = foundry.applications.apps.FilePicker.implementation;
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 async function playPreview(path, btnElement) {
@@ -11,7 +11,7 @@ async function playPreview(path, btnElement) {
         const isSameTrack = game.wgtngmPreviewSound._previewPath === path;
 
         game.wgtngmPreviewSound.pause();
-        game.wgtngmPreviewSound.onended = null; 
+        game.wgtngmPreviewSound.onended = null;
         game.wgtngmPreviewSound = null;
 
         if (game.wgtngmPreviewBtn) {
@@ -38,7 +38,7 @@ async function playPreview(path, btnElement) {
     const audio = new Audio(path);
     audio._previewPath = path;
     audio.volume = game.settings.get("core", "globalInterfaceVolume") ?? 0.5;
-    
+
     try {
         await audio.play();
         game.wgtngmPreviewSound = audio;
@@ -51,7 +51,7 @@ async function playPreview(path, btnElement) {
                 icon.classList.add("fa-stop");
             }
         }
-        
+
         audio.onended = () => {
             if (game.wgtngmPreviewSound === audio) {
                 game.wgtngmPreviewSound = null;
@@ -75,7 +75,14 @@ async function playPreview(path, btnElement) {
 export class TagManager {
     constructor() {
         this.tags = game.settings.get(MODULE_NAME, "trackTags") || {};
-        this.allTracks = []; 
+
+        // Safety check: Ensure tags is an object, not an array or a primitive
+        if (!this.tags || typeof this.tags !== "object" || Array.isArray(this.tags)) {
+            console.warn("Mini Player | Tag database is corrupted or invalid format. Resetting to empty object.");
+            this.tags = {};
+        }
+
+        this.allTracks = [];
     }
 
 
@@ -100,7 +107,7 @@ export class TagManager {
 
         try {
             const result = await FilePicker.browse("data", path);
-            
+
             for (const file of result.files) {
                 const ext = `.${file.split(".").pop()}`.toLowerCase();
                 if (AUDIO_EXTENSIONS.has(ext)) {
@@ -125,7 +132,15 @@ export class TagManager {
 
     getAllUniqueTags() {
         const unique = new Set();
-        Object.values(this.tags).forEach(tList => tList.forEach(t => unique.add(t)));
+        if (!this.tags || typeof this.tags !== "object" || Array.isArray(this.tags)) return [];
+
+        Object.values(this.tags).forEach(tList => {
+            if (Array.isArray(tList)) {
+                tList.forEach(t => {
+                    if (typeof t === "string") unique.add(t);
+                });
+            }
+        });
         return Array.from(unique).sort();
     }
 
@@ -141,7 +156,7 @@ export class TagManager {
 
         const included = [];
         const excluded = [];
-        
+
         for (const [tag, state] of tagSelection.entries()) {
             if (state === 1) included.push(tag);
             else if (state === -1) excluded.push(tag);
@@ -224,32 +239,60 @@ export class TagManager {
     }
 
     async importTags(importedData, mode = "merge") {
-        // console.log(importedData);
-        if (!importedData || typeof importedData !== 'object') {
-            ui.notifications.error("Mini Player: Invalid tag data.");
+        if (!importedData || typeof importedData !== "object" || Array.isArray(importedData)) {
+            ui.notifications.error("Mini Player: Invalid tag data format. Expected an object map, not an array or primitive.");
+            return;
+        }
+
+        const sanitized = {};
+        let skipped = 0;
+        let validPaths = 0;
+
+        for (const [path, tags] of Object.entries(importedData)) {
+            // The expected format is { "path/to/file": ["tag1", "tag2"] }
+            // If tags is not an array, or path is obviously not a string, skip.
+            if (!Array.isArray(tags) || typeof path !== "string") {
+                skipped++;
+                continue;
+            }
+
+            // Sanitize tags: must be strings, non-empty, trimmed
+            const cleanTags = tags
+                .filter(t => typeof t === "string" && t.trim().length > 0)
+                .map(t => t.trim().toLowerCase());
+
+            if (cleanTags.length > 0) {
+                sanitized[path] = [...new Set(cleanTags)]; // Deduplicate
+                validPaths++;
+            } else {
+                skipped++;
+            }
+        }
+
+        if (validPaths === 0) {
+            ui.notifications.warn(`Mini Player: No valid tag data found to import. (Skipped ${skipped} invalid entries)`);
             return;
         }
 
         if (mode === "replace") {
-            this.tags = importedData;
+            this.tags = sanitized;
         } else {
-            for (const [path, newTags] of Object.entries(importedData)) {
-                if (!Array.isArray(newTags)) continue;
-
-                if (!this.tags[path]) {
-                    this.tags[path] = [];
-                }
-                
-                for (const tag of newTags) {
-                    if (!this.tags[path].includes(tag)) {
-                        this.tags[path].push(tag);
-                    }
-                }
+            for (const [path, tags] of Object.entries(sanitized)) {
+                if (!this.tags[path]) this.tags[path] = [];
+                const merged = new Set([...this.tags[path], ...tags]);
+                this.tags[path] = Array.from(merged).sort();
             }
         }
-        
+
         await this._save();
-        ui.notifications.info(`Mini Player: Tags imported successfully (${mode} mode).`);
+
+        let message = `Mini Player: Tags imported successfully (${mode} mode).`;
+        if (skipped > 0) {
+            message += ` Skipped ${skipped} invalid or malformed entries.`;
+            ui.notifications.warn(message);
+        } else {
+            ui.notifications.info(message);
+        }
     }
 }
 
@@ -261,24 +304,24 @@ export class TagEditor extends HandlebarsApplicationMixin(ApplicationV2) {
         window: { title: "Edit Track Tags", resizable: true },
         position: { width: 600, height: 700 },
         actions: {
-            addTag: async function(event, target) {
+            addTag: async function (event, target) {
                 const path = target.dataset.path;
                 const input = target.previousElementSibling;
                 await game.wgtngmTags.addTag(path, input.value);
                 input.value = "";
                 this.render();
             },
-            removeTag: async function(event, target) {
+            removeTag: async function (event, target) {
                 const path = target.dataset.path;
                 const tag = target.dataset.tag;
                 await game.wgtngmTags.removeTag(path, tag);
                 this.render();
             },
-            previewTrack: async function(event, target) {
+            previewTrack: async function (event, target) {
                 const path = target.dataset.path;
                 await playPreview(path, target);
             },
-            cleanTags: async function(event, target) {
+            cleanTags: async function (event, target) {
                 const confirm = await confirmationDialog(
                     "This will permanently remove tags for files that are no longer in your Music Directory. <br><br><strong>Ensure your hard drives/modules are loaded correctly before proceeding.</strong>"
                 );
@@ -292,10 +335,10 @@ export class TagEditor extends HandlebarsApplicationMixin(ApplicationV2) {
                     }
                 }
             },
-            exportTags: async function(event, target) {
+            exportTags: async function (event, target) {
                 await game.wgtngmTags.exportTags();
             },
-            importTagsTrigger: function(event, target) {
+            importTagsTrigger: function (event, target) {
                 this.element.querySelector("#wgtgm-import-file").click();
             }
         }
@@ -306,11 +349,11 @@ export class TagEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     };
 
 
-  /** @inheritDoc */
-  async _renderFrame(options) {
-    const frame = await super._renderFrame(options);
-    if ( !this.hasFrame ) return frame;
-    const copyId = `
+    /** @inheritDoc */
+    async _renderFrame(options) {
+        const frame = await super._renderFrame(options);
+        if (!this.hasFrame) return frame;
+        const copyId = `
         <button type="button" class="header-control fa-solid fa-file-export icon" data-action="exportTags"
                 data-tooltip="Export Tags to JSON" aria-label="Export Tags to JSON"></button>
         <button type="button" class="header-control fa-solid fa-file-import icon" data-action="importTagsTrigger"
@@ -318,13 +361,13 @@ export class TagEditor extends HandlebarsApplicationMixin(ApplicationV2) {
         <button type="button" class="header-control fa-solid fa-broom icon" data-action="cleanTags"
                 data-tooltip="Remove tags for missing files" aria-label="Remove tags for missing files"></button>
       `;
-      this.window.close.insertAdjacentHTML("beforebegin", copyId);
-    
-    return frame;
-  }
+        this.window.close.insertAdjacentHTML("beforebegin", copyId);
+
+        return frame;
+    }
     _onRender(context, options) {
         super._onRender(context, options);
-        
+
         const fileInput = this.element.querySelector("#wgtgm-import-file");
         if (fileInput) {
             fileInput.addEventListener("change", (event) => this._handleFileSelect(event));
@@ -404,7 +447,7 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
         window: { title: "Create Playlist from Tags", resizable: true, width: 500, height: 600 },
         actions: {
             toggleTag: {
-                handler: function(event, target) {
+                handler: function (event, target) {
                     const tag = target.dataset.tag;
                     const current = this.tagSelection.get(tag) || 0;
                     let next = 0;
@@ -428,17 +471,17 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
                 },
                 buttons: [0, 2] // Enable Left (0) and Right (2) clicks
             },
-            toggleTTRPG: function() {
+            toggleTTRPG: function () {
                 if (!ttrpgIntegration.active) return;
                 this.includeTTRPG = !this.includeTTRPG;
                 this.tagSelection.clear();
                 this.render();
             },
-            toggleMatchMode: function() {
+            toggleMatchMode: function () {
                 this.matchMode = this.matchMode === "AND" ? "OR" : "AND";
                 this.render();
             },
-            createPlaylist: async function() {
+            createPlaylist: async function () {
                 if (this.tagSelection.size === 0) return;
 
                 const { included, excluded } = this._getSplitTags();
@@ -480,10 +523,10 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
                 ui.notifications.info(`Created playlist "${playlist.name}" with ${sounds.length} tracks.`);
                 this.close();
             },
-            previewTrack: async function(event, target) {
+            previewTrack: async function (event, target) {
                 const path = target.dataset.path;
                 const isTtrpg = target.dataset.isTtrpg === "true";
-                
+
                 if (isTtrpg) {
                     const trackName = target.closest('li').innerText.trim(); // Fallback or use ID lookup
                 }
@@ -493,14 +536,14 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
     };
 
     static PARTS = {
-        main: { template: "modules/wgtgm-mini-player/templates/tag-generator.hbs", scrollable: ["",".scrollable",".tag-cloud",".preview-section"] },
+        main: { template: "modules/wgtgm-mini-player/templates/tag-generator.hbs", scrollable: ["", ".scrollable", ".tag-cloud", ".preview-section"] },
         footer: { template: "modules/wgtgm-mini-player/templates/form-footer-tag.hbs" },
     };
 
     constructor(options) {
         super(options);
-        this.tagSelection = new Map(); 
-        this.matchMode = "AND"; 
+        this.tagSelection = new Map();
+        this.matchMode = "AND";
         this.includeTTRPG = false;
     }
 
@@ -519,7 +562,7 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
      */
     _getCombinedFilteredTracks(included, excluded) {
         let pool = [...game.wgtngmTags.allTracks];
-        
+
         if (this.includeTTRPG && ttrpgIntegration.isAvailable) {
             pool = pool.concat(ttrpgIntegration.tracks);
         }
@@ -532,7 +575,7 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
             }
 
             if (excluded.length > 0 && excluded.some(t => trackTags.includes(t))) return false;
-            
+
             if (included.length > 0) {
                 if (this.matchMode === "AND") {
                     return included.every(t => trackTags.includes(t));
@@ -567,8 +610,8 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
 
         return tracks;
     }
-    
-async _prepareContext(options) {
+
+    async _prepareContext(options) {
         const context = await super._prepareContext(options);
         if (game.wgtngmTags.allTracks.length === 0) {
             await game.wgtngmTags.scanLibrary();
@@ -576,27 +619,27 @@ async _prepareContext(options) {
 
         const allLocalTags = game.wgtngmTags.getAllUniqueTags();
         let allTagsSet = new Set(allLocalTags);
-        
+
         if (this.includeTTRPG && ttrpgIntegration.isAvailable) {
             ttrpgIntegration.tags.forEach(t => allTagsSet.add(t));
         }
-            const PRIORITY_TAGS = ["standard", "alternate", "bonus"];
-            
-            const allTags = Array.from(allTagsSet).sort((a, b) => {
-                const indexA = PRIORITY_TAGS.indexOf(a);
-                const indexB = PRIORITY_TAGS.indexOf(b);
+        const PRIORITY_TAGS = ["standard", "alternate", "bonus"];
 
-                if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-                if (indexA !== -1) return -1;
-                if (indexB !== -1) return 1;
-                
-                return a.localeCompare(b);
-            });
+        const allTags = Array.from(allTagsSet).sort((a, b) => {
+            const indexA = PRIORITY_TAGS.indexOf(a);
+            const indexB = PRIORITY_TAGS.indexOf(b);
+
+            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+            if (indexA !== -1) return -1;
+            if (indexB !== -1) return 1;
+
+            return a.localeCompare(b);
+        });
 
         const { included, excluded } = this._getSplitTags();
-        
+
         let matchingTracks = this._getCombinedFilteredTracks(included, excluded);
-        
+
         let availableTags = null;
         if (this.matchMode === "AND") {
             availableTags = new Set();
@@ -604,7 +647,7 @@ async _prepareContext(options) {
                 let tags;
                 if (t.isTTRPG) tags = t.tags;
                 else tags = game.wgtngmTags.getTags(t.path);
-                
+
                 tags.forEach(tag => availableTags.add(tag));
             });
         }
@@ -624,11 +667,11 @@ async _prepareContext(options) {
                     stateClass: stateClass
                 };
             });
-            const currentPreview = game.wgtngmPreviewSound?._previewPath;
-            matchingTracks = matchingTracks.map(t => {
+        const currentPreview = game.wgtngmPreviewSound?._previewPath;
+        matchingTracks = matchingTracks.map(t => {
             let rawTags;
             let displayPath;
-            
+
             if (t.isTTRPG) {
                 rawTags = t.tags;
                 displayPath = ttrpgIntegration.getPath(t, false);
@@ -639,12 +682,12 @@ async _prepareContext(options) {
 
             const formattedTags = rawTags.map(tagName => ({
                 name: tagName,
-                isSelected: included.includes(tagName) 
+                isSelected: included.includes(tagName)
             }));
 
             return {
                 ...t,
-                previewPath: displayPath, 
+                previewPath: displayPath,
                 tags: formattedTags,
                 isPlaying: currentPreview === displayPath
             };
@@ -655,7 +698,7 @@ async _prepareContext(options) {
         context.hasSelection = this.tagSelection.size > 0;
         context.matchMode = this.matchMode;
         context.hasTags = allTags.length > 0;
-        
+
         // Pass TTRPG availability to template
         context.showTTRPGToggle = ttrpgIntegration.active;
         context.ttrpgEnabled = this.includeTTRPG;

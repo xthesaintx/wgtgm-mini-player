@@ -1,3 +1,6 @@
+## 4.4
+- safety checks on tag import
+
 ## 4.3
 - some window position fixes
 
