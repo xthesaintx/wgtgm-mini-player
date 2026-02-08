@@ -92,13 +92,18 @@ export async function removePlaylists(){
   }
 
 export function addplaylistDirectoryUI(html) {
-    const nativeHtml = html instanceof jQuery ? html[0] : html;
+    const nativeHtml = html;
     if (!game.user.isGM) return;
 
     const directoryHeader = nativeHtml.querySelector(".directory-header");
-    if (directoryHeader) {
+    if (directoryHeader && !directoryHeader.querySelector(".mp-miniplayer-panel-buttons")) {
         directoryHeader.insertAdjacentHTML("beforeend", getButtonGrouphead());
     }
+
+    const panelButtons = nativeHtml.querySelector(".mp-miniplayer-panel-buttons");
+    if (!panelButtons || panelButtons.dataset.bound === "true") return;
+
+    panelButtons.dataset.bound = "true";
 
     nativeHtml
         .querySelector(".mp-miniplayer-open")
