@@ -194,7 +194,7 @@ export function openwgtngmSoundboardSheet() {
 
 // Update the function signature
 export function checkAndRender(playlist, changes) { 
-    if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.dontUpdate) return;
+    if (game.wgtngmMiniPlayer?.wgtngmMiniPlayerInstance?.dontUpdate) return;
     debouncedRender(playlist, changes);
 }
 
@@ -203,11 +203,11 @@ const debouncedRender = foundry.utils.debounce((playlist, changes) => {
     playlist.mode === CONST.PLAYLIST_MODES.DISABLED || 
     playlist.parent?.mode === CONST.PLAYLIST_MODES.DISABLED;
 
-    if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.rendered && !soundBoard) {
+    if (game.wgtngmMiniPlayer?.wgtngmMiniPlayerInstance?.rendered && !soundBoard) {
         game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render();
     }
 
-    if (game.wgtngmSoundboard.wgtngmSoundboardInstance?.rendered && soundBoard)  {
+    if (game.wgtngmSoundboard?.wgtngmSoundboardInstance?.rendered && soundBoard)  {
         game.wgtngmSoundboard.wgtngmSoundboardInstance.render();
     }
 
