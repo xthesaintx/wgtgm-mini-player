@@ -28,7 +28,7 @@ export default async function miniplayerSettings() {
         default: false
     });
     game.settings.register("wgtgm-mini-player", "runonlyonce", {
-        name: "Welcome message",
+        name: "Welcome message disabled",
         hint: "Disable to see the Welcome Message",
         scope: "world",
         config: true,
