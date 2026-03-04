@@ -1,3 +1,16 @@
+## 5.9
+- Added Mini Player and Soundboard tools to Sounds scene controls
+- Added Soundboard “remember last playlist”
+- Added Soundboard left dock mode with slide handle
+- Added dock-top capture/persistence from current window Y when docking
+- Added immediate hide on close (display:none) for Soundboard and Mini Player
+- Added Tag Editor header toggle to filter “untagged only” vs “all tracks” 
+- Added Tag Generator header stop button to stop all preview playback
+- Added Soundboard auto-size mode persistence
+- Changed Soundboard auto-size to width-driven height fit
+- Added setting to cap auto-size max width to one-row width
+- Made Auto Size button act as on/off indicator, with green active state
+
 ## 4.4
 - safety checks on tag import
 
