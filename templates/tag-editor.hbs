@@ -1,6 +1,10 @@
 <div class="wgtgm-tag-editor-content">
     <div class="header">
-        <p>Type a tag and press Enter or click the + button.</p>
+        {{#if onlyUntagged}}
+        <p><strong>Filter:</strong> Showing tracks with no tags only.</p>
+        {{else}}
+        <p><strong>Filter:</strong> Showing all tracks.</p>
+        {{/if}}
         <datalist id="wgtgm-existing-tags">
             {{#each allTags}}
             <option value="{{this}}"></option>
@@ -15,13 +19,6 @@
             <div class="track-info">
                 <strong>{{this.name}}</strong>
             </div>
-            <div class="tag-container">
-                {{#each this.tags}}
-                <span class="tag-pill">
-                    {{this}} <i class="fas fa-circle-x" data-action="removeTag" data-path="{{../path}}" data-tag="{{this}}"></i>
-                </span>
-                {{/each}}
-            </div>
             <div class="add-tag-wrapper">
                 <input type="text" list="wgtgm-existing-tags" placeholder="Add tag..." 
                        onkeydown="if(event.key === 'Enter') this.nextElementSibling.click()">
@@ -30,6 +27,13 @@
                     <i class="fas {{#if this.isPlaying}}fa-stop{{else}}fa-play{{/if}}"></i>
                 </button>
             </div>    
+            <div class="tag-container">
+                {{#each this.tags}}
+                <span class="tag-pill">
+                    {{this}} <i class="fas fa-circle-x" data-action="removeTag" data-path="{{../path}}" data-tag="{{this}}"></i>
+                </span>
+                {{/each}}
+            </div>
         </div>
         {{/each}}
     </div>

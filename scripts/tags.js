@@ -2,6 +2,7 @@ import { MODULE_NAME } from "./settings.js";
 import { formatTrackName } from "./importer.js";
 import { confirmationDialog } from "./helper.js";
 import { ttrpgIntegration } from "./ttrpg.js"; 
+import { filterTracksBySelection, sanitizeImportedTagData } from "./tag-utils.js";
 const AUDIO_EXTENSIONS = new Set(Object.keys(CONST.AUDIO_FILE_EXTENSIONS).map(e => `.${e.toLowerCase()}`));
 const FilePicker = foundry.applications.apps.FilePicker.implementation;
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -71,6 +72,23 @@ async function playPreview(path, btnElement) {
     }
 }
 
+function stopPreviewPlayback() {
+    if (game.wgtngmPreviewSound) {
+        game.wgtngmPreviewSound.pause();
+        game.wgtngmPreviewSound.onended = null;
+        game.wgtngmPreviewSound = null;
+    }
+
+    if (game.wgtngmPreviewBtn) {
+        const icon = game.wgtngmPreviewBtn.querySelector("i");
+        if (icon) {
+            icon.classList.remove("fa-stop");
+            icon.classList.add("fa-play");
+        }
+        game.wgtngmPreviewBtn = null;
+    }
+}
+
 
 export class TagManager {
     constructor() {
@@ -86,16 +104,30 @@ export class TagManager {
     }
 
 
-    async scanLibrary() {
+    async scanLibrary({ force = false } = {}) {
         const musicFolder = game.settings.get(MODULE_NAME, "music-folder");
         if (!musicFolder) {
             ui.notifications.warn("Mini Player: Music folder not set.");
             return [];
         }
 
+        if (!force) {
+            if (this.allTracks.length > 0) return this.allTracks;
+            const cached = game.settings.get(MODULE_NAME, "trackScanCache");
+            if (cached?.folder === musicFolder && Array.isArray(cached?.tracks)) {
+                this.allTracks = cached.tracks;
+                return this.allTracks;
+            }
+        }
+
         const files = [];
         await this._scanRecursive(musicFolder, files);
         this.allTracks = files;
+        await game.settings.set(MODULE_NAME, "trackScanCache", {
+            folder: musicFolder,
+            tracks: files,
+            scannedAt: Date.now()
+        });
         return files;
     }
 
@@ -122,7 +154,7 @@ export class TagManager {
                 await this._scanRecursive(dir, fileList);
             }
         } catch (e) {
-            
+            console.warn(`Mini Player | Failed to scan directory "${path}"`, e);
         }
     }
 
@@ -153,31 +185,12 @@ export class TagManager {
      */
     getFilteredTracks(tagSelection, matchMode) {
         if (!this.allTracks || this.allTracks.length === 0) return [];
-
-        const included = [];
-        const excluded = [];
-
-        for (const [tag, state] of tagSelection.entries()) {
-            if (state === 1) included.push(tag);
-            else if (state === -1) excluded.push(tag);
-        }
-        if (included.length === 0 && excluded.length === 0) {
-            return this.allTracks;
-        }
-
-        return this.allTracks.filter(track => {
-            const trackTags = this.getTags(track.path);
-            if (excluded.some(t => trackTags.includes(t))) return false;
-            if (included.length > 0) {
-                if (matchMode === "AND") {
-                    return included.every(t => trackTags.includes(t));
-                } else {
-                    return included.some(t => trackTags.includes(t));
-                }
-            }
-
-            return true;
-        });
+        return filterTracksBySelection(
+            this.allTracks,
+            tagSelection,
+            (track) => this.getTags(track.path),
+            matchMode
+        );
     }
 
     async addTag(path, tag) {
@@ -243,31 +256,7 @@ export class TagManager {
             ui.notifications.error("Mini Player: Invalid tag data format. Expected an object map, not an array or primitive.");
             return;
         }
-
-        const sanitized = {};
-        let skipped = 0;
-        let validPaths = 0;
-
-        for (const [path, tags] of Object.entries(importedData)) {
-            
-            
-            if (!Array.isArray(tags) || typeof path !== "string") {
-                skipped++;
-                continue;
-            }
-
-            
-            const cleanTags = tags
-                .filter(t => typeof t === "string" && t.trim().length > 0)
-                .map(t => t.trim().toLowerCase());
-
-            if (cleanTags.length > 0) {
-                sanitized[path] = [...new Set(cleanTags)]; 
-                validPaths++;
-            } else {
-                skipped++;
-            }
-        }
+        const { sanitized, skipped, validPaths } = sanitizeImportedTagData(importedData);
 
         if (validPaths === 0) {
             ui.notifications.warn(`Mini Player: No valid tag data found to import. (Skipped ${skipped} invalid entries)`);
@@ -340,6 +329,11 @@ export class TagEditor extends HandlebarsApplicationMixin(ApplicationV2) {
             },
             importTagsTrigger: function (event, target) {
                 this.element.querySelector("#wgtgm-import-file").click();
+            },
+            toggleUntaggedFilter: async function () {
+                this.onlyUntagged = !this.onlyUntagged;
+                await game.settings.set(MODULE_NAME, "tagEditorOnlyUntagged", this.onlyUntagged);
+                this.render();
             }
         }
     };
@@ -348,16 +342,27 @@ export class TagEditor extends HandlebarsApplicationMixin(ApplicationV2) {
         main: { template: "modules/wgtgm-mini-player/templates/tag-editor.hbs", scrollable: [".track-list"] }
     };
 
+    constructor(options = {}) {
+        super(options);
+        this.onlyUntagged = game.settings.get(MODULE_NAME, "tagEditorOnlyUntagged") ?? false;
+    }
+
 
     /** @inheritDoc */
     async _renderFrame(options) {
         const frame = await super._renderFrame(options);
         if (!this.hasFrame) return frame;
+        const filterIcon = this.onlyUntagged ? "fa-tags-slash" : "fa-tags";
+        const filterTooltip = this.onlyUntagged
+            ? "Showing tracks with no tags only (click for all tracks)"
+            : "Showing all tracks (click for untagged only)";
         const copyId = `
         <button type="button" class="header-control fa-solid fa-file-export icon" data-action="exportTags"
                 data-tooltip="Export Tags to JSON" aria-label="Export Tags to JSON"></button>
         <button type="button" class="header-control fa-solid fa-file-import icon" data-action="importTagsTrigger"
                 data-tooltip="Import Tags from JSON" aria-label="Import Tags from JSON"></button>
+        <button type="button" class="header-control fa-solid ${filterIcon} icon" data-action="toggleUntaggedFilter"
+                data-tooltip="${filterTooltip}" aria-label="${filterTooltip}"></button>
         <button type="button" class="header-control fa-solid fa-broom icon" data-action="cleanTags"
                 data-tooltip="Remove tags for missing files" aria-label="Remove tags for missing files"></button>
       `;
@@ -383,11 +388,15 @@ export class TagEditor extends HandlebarsApplicationMixin(ApplicationV2) {
 
         const allTags = game.wgtngmTags.getAllUniqueTags();
         const currentPreview = game.wgtngmPreviewSound?._previewPath;
-        context.tracks = game.wgtngmTags.allTracks.map(t => ({
+        const tracks = game.wgtngmTags.allTracks.map(t => ({
             ...t,
             tags: game.wgtngmTags.getTags(t.path),
             isPlaying: currentPreview === t.path
         })).sort((a, b) => a.name.localeCompare(b.name));
+        context.tracks = this.onlyUntagged
+            ? tracks.filter((track) => track.tags.length === 0)
+            : tracks;
+        context.onlyUntagged = this.onlyUntagged;
         context.allTags = allTags;
         return context;
     }
@@ -531,6 +540,10 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
                     const trackName = target.closest('li').innerText.trim(); 
                 }
                 await playPreview(path, target);
+            },
+            stopPreviews: function () {
+                stopPreviewPlayback();
+                this.render();
             }
         }
     };
@@ -545,6 +558,20 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
         this.tagSelection = new Map();
         this.matchMode = "AND";
         this.includeTTRPG = false;
+    }
+
+    /** @inheritDoc */
+    async _renderFrame(options) {
+        const frame = await super._renderFrame(options);
+        if (!this.hasFrame) return frame;
+
+        const copyId = `
+        <button type="button" class="header-control fa-solid fa-stop icon" data-action="stopPreviews"
+                data-tooltip="Stop preview playback" aria-label="Stop preview playback"></button>
+      `;
+        this.window.close.insertAdjacentHTML("beforebegin", copyId);
+
+        return frame;
     }
 
     _getSplitTags() {
@@ -706,4 +733,3 @@ export class TagPlaylistGenerator extends HandlebarsApplicationMixin(Application
         return context;
     }
 }
-

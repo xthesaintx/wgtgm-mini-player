@@ -84,6 +84,18 @@ body.theme-light .wgtngmSoundboard .sound-button.playing
     justify-content: space-between;
     gap: 4px;
 }
+.wgtngmMiniPlayer .wgtngm-tag-chip {
+    flex: 0 0 auto;
+    width: auto;
+    font-size: 0.75em;
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+.wgtngmMiniPlayer .wgtngm-tag-hint {
+    font-size: 0.75em;
+    opacity: 0.85;
+}
 
 .wgtngmMiniPlayer .wgtngm-drawer-container {
     position: absolute;
@@ -126,7 +138,7 @@ body.theme-light .wgtngmSoundboard .sound-button.playing
 .wgtngm-drawer-container.open .wgtngm-drawer-content {
     max-height: 150px; 
     padding: 10px;
-    transform 0.3s ease-out;
+    transition: transform 0.3s ease-out;
 }
 
 .wgtngmMiniPlayer .wgtngm-player-body {
@@ -184,7 +196,7 @@ body.theme-light .wgtngmSoundboard .sound-button.playing
 }
 .wgtngmMiniPlayer.compact-mode .wgtngm-control-wrapper button {
     width: 24px;
-    height: 4px;
+    height: 24px;
     border: none;
     padding: 4px;
 }
@@ -210,7 +222,6 @@ body.theme-light .wgtngmSoundboard .sound-button.playing
 .wgtngmMiniPlayer.compact-mode .wgtngm-drawer-content .form-group select {
     height: 18px;
 }
-
 .wgtngmMiniPlayer.compact-mode .wgtngm-drawer-content .form-group label {
     display: none;
 }   
@@ -489,33 +500,33 @@ body.theme-light .wgtngmSoundboard .sound-button.playing
     background: rgba(0, 0, 0, 0.1);
     padding: 5px;
     border-radius: 4px;
-    display: grid;
-    grid-template-columns: auto auto max-content;
+    display: flex;
     gap: 8px;
     align-items: center;
     border-bottom: 1px dotted;
     padding-bottom: 4px;
     padding-top: 4px;
+    flex-wrap: wrap;
+    justify-content: space-between;
 }
 
 .wgtgm-tag-editor-content .tag-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-/*    margin-top: 4px;*/
+    gap: 4px;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    flex: 1 1 100%;
 }
 
 .wgtgm-tag-editor-content .tag-pill {
-    background: var(--color-level-info-border);
-    color: white;
-    padding: 2px 6px;
+padding: 2px 6px;
     border-radius: 6px;
     font-size: 0.8em;
     display: flex;
     align-items: baseline;
     gap: 4px;
+    border: 1px solid var(--color-level-info-border);
 }
 
 .wgtgm-tag-editor-content .tag-pill i { cursor: pointer; align-self: self-end;}
@@ -607,11 +618,16 @@ color: var(--color-level-error);
     box-shadow: none; 
 }
 
-.track-info {
+.wgtgm-tag-editor-content .track-info {
     display: flex;
-    align-items: center; 
+    align-items: center;
     gap: 5px;
-    flex-wrap: wrap;
+    flex: 1;
+}
+.wgtgm-tag-editor-content .track-info strong{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .wgtgm-tag-editor-content .preview-btn.small,
@@ -627,14 +643,13 @@ color: var(--color-level-error);
 color: var(--color-level-error);
 }
 
-fa-play
-
 .wgtgm-tag-editor-content .add-tag-wrapper input::-webkit-calendar-picker-indicator {
-    margin-right: -2px; 
-    margin-bottom: 8px; 
+    vertical-align: middle;
+    align-self: normal;
     cursor: pointer;
 }
-
+.wgtngm-sb-dock-handle:active,
+.wgtngm-sb-dock-handle:focus,
 .wgtgm-tag-editor-content button:focus,
 .wgtgm-tag-editor-content button.active, 
 .wgtgm-tag-generator button:focus,
@@ -842,6 +857,20 @@ fa-play
     transition: height 0.3s ease-out;
 
 }
+.application.wgtngmSoundboard.docked-left .window-resize-handle
+{
+            border-radius: 0px 8px 8px 0px;
+
+}
+.application.wgtngmSoundboard.docked-left .window-header{
+    justify-content: flex-end;
+        border-radius: 0px 8px 8px 0px;
+}
+
+.application.wgtngmSoundboard.docked-left .window-header .window-title,
+.application.wgtngmSoundboard.docked-left .window-header i.window-icon.fa-fw.fas.fa-border-all{
+    display: none;
+}
 
 .application.wgtngmMiniPlayer.docked .wgtngm-drawer-content {
     box-shadow: none; 
@@ -862,4 +891,39 @@ fa-play
 
 .application.wgtngmMiniPlayer.docked .tag-cloud {
         max-height: unset;
+}
+
+/* Soundboard left dock mode */
+.application.wgtngmSoundboard.docked-left {
+    position: fixed !important;
+    left: 0 !important;
+    z-index: 70 !important;
+    transition: transform 0.15s ease;
+    overflow: visible !important;
+    max-height: calc(100vh - 120px);
+}
+
+.application.wgtngmSoundboard.docked-left.collapsed {
+    transform: translateX(calc(-100% + 5px));
+}
+.application.wgtngmSoundboard.docked-left .window-content,
+.application.wgtngmSoundboard.docked-left {
+    border-radius: 0px 8px 8px 0px;
+}
+.application.wgtngmSoundboard.docked-left .wgtngm-sb-dock-handle {
+    position: absolute;
+    right: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 72px;
+    border-radius: 0 8px 8px 0;
+    border: 1px solid var(--color-border-dark-1);
+    border-left: none;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.wgtngmSoundboard .soundboard-header .wgtngm-resize-toggle.active i {
+    color: var(--color-level-success);
 }

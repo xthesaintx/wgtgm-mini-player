@@ -3,37 +3,37 @@
         <i class="fas fa-caret-down wgtngm-drawer-handle" data-action="open-playlists"></i>
 <div class="wgtngm-drawer-content">
             {{#if tagMode}}
-<div class="tag-cloud">
+                <div class="tag-cloud">
                     {{#if showTTRPGToggle}}
-                    <button type="button" class="tag-toggle {{#if ttrpgEnabled}}enabled{{/if}}" data-action="toggle-ttrpg-source" 
-                            style="flex:0 0 auto; width:auto; font-size:0.75em; padding:1px 5px; border-radius:3px; border:1px solid rgba(0,0,0,0.2);">
+                    <button type="button" class="tag-toggle wgtngm-tag-chip {{#if ttrpgEnabled}}enabled{{/if}}" data-action="toggle-ttrpg-source"
+                            title="{{ttrpgSourceToggleTitle}}">
                         TTRPG
                     </button>
                     {{/if}}
 
                     {{#each tags}}
-                    <button type="button" class="tag-toggle {{this.stateClass}}" data-action="toggle-tag-select" data-tag="{{this.name}}" 
-                            style="flex:0 0 auto; width:auto; font-size:0.75em; padding:1px 5px; border-radius:3px; border:1px solid rgba(0,0,0,0.2);">
+                    <button type="button" class="tag-toggle wgtngm-tag-chip {{this.stateClass}}" data-action="toggle-tag-select" data-tag="{{this.name}}"
+                            title="{{../tagToggleTitle}}">
                         {{this.name}}
                     </button>
                     {{/each}}
                 </div>
-                
+            
                 <div class="form-group">
-                    <label for="track-select">Results:</label>
+                    <label for="track-select">{{resultsLabel}}</label>
                     <select name="track-select" id="track-select">
                         {{#each tracks}}
                         <option value="{{this.id}}" {{#if this.isSelected}}selected{{/if}}>
                             {{#if this.playing}}&#9658;{{/if}} {{this.name}}
                         </option>
                         {{else}}
-                        <option value="">-- No Matches --</option>
+                        <option value="">{{noMatchesText}}</option>
                         {{/each}}
                     </select>
                 </div>
             {{else}}
                 <div class="form-group">
-                    <label for="playlist-select">Playlist:</label>
+                    <label for="playlist-select">{{playlistLabel}}</label>
                     <select name="playlist-select" id="playlist-select">
                         {{#each playlists}}
                         <option value="{{this.id}}" {{#if this.isSelected}}selected{{/if}}>
@@ -44,14 +44,14 @@
                 </div>
                 {{!-- Standard Track Dropdown --}}
                 <div class="form-group">
-                    <label for="track-select">Track:</label>
+                    <label for="track-select">{{trackLabel}}</label>
                     <select name="track-select" id="track-select">
                         {{#each tracks}}
                         <option value="{{this.id}}" {{#if this.isSelected}}selected{{/if}}>
                             {{#if this.playing}}&#9658;{{/if}} {{this.name}} {{#if this.isMuted}} &#128263;{{/if}}{{#if this.repeat}} &#128257;{{/if}}{{#if this.isFavorite}} &#11088;{{/if}}
                         </option>
                         {{else}}
-                        <option value="">--Select a Track--</option>
+                        <option value="">{{selectTrackText}}</option>
                         {{/each}}
                     </select>
                 </div>
@@ -62,25 +62,25 @@
     <div class="wgtngm-player-body">
         <div class="wgtngm-main-bar">
             <div class="wgtngm-now-playing">
-                <i class="{{#if isFavorite}}fas fa-star{{else}}far fa-star{{/if}} wgtngm-favorite " data-action="wgtngm-favorite" title="Favorite"> </i>
+                <i class="{{#if isFavorite}}fas fa-star{{else}}far fa-star{{/if}} wgtngm-favorite " data-action="wgtngm-favorite" title="{{favoriteTitle}}"> </i>
                 <span class="wgtngm-track-name">{{nowPlaying}}</span>
             </div>
             <div class="wgtngm-time-display">
                 <span class="wgtngm-current-time">00:00</span> / <span class="wgtngm-duration-time">00:00</span>
-                <i class="fas fa-shuffle wgtngm-fade {{#if isFade}}fade{{/if}}" data-action="fadeSounds" title="Crossfade {{#if isFade}}on{{else}}off{{/if}}"></i>
-                <i class="fas fa-repeat wgtngm-loop {{#if isLooping}}open{{/if}}" data-action="wgtngm-loop" title="Loop"></i>
+                <i class="fas fa-shuffle wgtngm-fade {{#if isFade}}fade{{/if}}" data-action="fadeSounds" title="{{crossfadeTitle}}"></i>
+                <i class="fas fa-repeat wgtngm-loop {{#if isLooping}}open{{/if}}" data-action="wgtngm-loop" title="{{loopTitle}}"></i>
             </div>
         </div>
         <div class="wgtngm-control-wrapper">
             <div class="wgtngm-player-controls">
-                <button class="wgtngm-previous-track" data-action="previous-track" title="Previous Track"><i class="fas fa-backward"></i></button>
-                <button data-action="toggle-play-pause" title="Play/Pause"><i class="fas {{#if isPlaying}}fa-pause{{else}}fa-play{{/if}}"></i></button>
-                <button class="wgtngm-stop-track" data-action="stop-track" title="Stop"><i class="fas fa-stop"></i></button>
-                <button data-action="next-track" title="Next Track"><i class="fas fa-forward"></i></button>
+                <button class="wgtngm-previous-track" data-action="previous-track" title="{{previousTrackTitle}}"><i class="fas fa-backward"></i></button>
+                <button data-action="toggle-play-pause" title="{{playPauseTitle}}"><i class="fas {{#if isPlaying}}fa-pause{{else}}fa-play{{/if}}"></i></button>
+                <button class="wgtngm-stop-track" data-action="stop-track" title="{{stopTitle}}"><i class="fas fa-stop"></i></button>
+                <button data-action="next-track" title="{{nextTrackTitle}}"><i class="fas fa-forward"></i></button>
             </div>
             <div class="wgtngm-playback-bar">
                 <div class="wgtngm-volume-control">
-                    <button type="button" class="wgtngm-mute-button" data-action="toggle-mute" title="Mute">
+                    <button type="button" class="wgtngm-mute-button" data-action="toggle-mute" title="{{muteTitle}}">
                         <i class="fas {{#if isMuted}}fa-volume-xmark{{else}}fa-volume-high{{/if}}"></i>
                     </button>
                     <input type="range" name="volume" min="0" max="1" step="0.05" value="{{volume}}">
@@ -89,7 +89,7 @@
         </div>
         <div class="wgtngm-track-info">
             <div class="wgtngm-next-up">
-                <strong>Next:</strong>
+                <strong>{{nextLabel}}</strong>
                 <span class="wgtngm-next-track-name">{{nextUp}}</span>
             </div>
         </div>
