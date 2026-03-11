@@ -7,10 +7,10 @@
 
 .application.wgtngmMiniPlayer
 {
-	min-height: 115px;
-	max-height: 175px;
-	min-width: 250px;
-	max-width: 500px;
+    min-height: 115px;
+    max-height: 175px;
+    min-width: 250px;
+    max-width: 500px;
     overflow: visible;
 }
 body.theme-dark .wgtngmSoundboard .sound-button.playing
@@ -832,10 +832,18 @@ color: var(--color-level-error);
     flex-direction: row;
     justify-content: flex-end;
 }
+.application.wgtngmMiniPlayer.docked-left .window-header .window-icon,
+.application.wgtngmMiniPlayer.docked .window-header .window-icon{
+display: none;
+}
+.application.wgtngmMiniPlayer.compact-mode .window-header{
+gap: 0;
+}
 
 .application.wgtngmMiniPlayer.docked .window-title {
     display: none;
 }
+
 
 .application.wgtngmMiniPlayer.docked .window-content {
     border-radius: 0px;
@@ -857,6 +865,15 @@ color: var(--color-level-error);
     transition: height 0.3s ease-out;
 
 }
+.application.wgtngmMiniPlayer.docked-left:not(.collapsed), 
+.application.wgtngmSoundboard.docked-left:not(.collapsed){
+        z-index: 999 !important;
+}
+.application.wgtngmMiniPlayer.docked-left.collapsed,
+.application.wgtngmSoundboard.docked-left.collapsed{
+        z-index: 70 !important;
+}
+
 .application.wgtngmSoundboard.docked-left .window-resize-handle
 {
             border-radius: 0px 8px 8px 0px;
@@ -893,11 +910,59 @@ color: var(--color-level-error);
         max-height: unset;
 }
 
+.application.wgtngmMiniPlayer.docked-left {
+    position: fixed !important;
+    left: 0 !important;
+    z-index: 70 !important;
+    overflow: visible !important;
+    border-radius: 0 8px 8px 0 !important;
+    transition: transform 0.15s ease;
+}
+
+.application.wgtngmMiniPlayer.docked-left.collapsed {
+    transform: translateX(calc(-100% + 5px));
+}
+
+.application.wgtngmMiniPlayer.docked-left .window-content {
+    border-radius: 0 8px 8px 0 !important;
+}
+
+.application.wgtngmMiniPlayer.docked-left .window-header {
+    justify-content: flex-end;
+}
+
+.application.wgtngmMiniPlayer.docked-left .window-header .window-title,
+.application.wgtngmMiniPlayer.docked-left .window-header .window-icon {
+    display: none;
+}
+.application.wgtngmMiniPlayer.docked .window-resize-handle,
+.application.wgtngmMiniPlayer.docked .wgtngm-mp-dock-handle {
+    display: none;
+
+}
+.application.wgtngmMiniPlayer.docked-left .wgtngm-mp-dock-handle {
+    position: absolute;
+    right: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 72px;
+    border-radius: 0 8px 8px 0;
+    border: 1px solid var(--color-border-dark-1);
+    border-left: none;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.application.wgtngmMiniPlayer .window-header .fa-left-to-bracket.active {
+    color: var(--color-level-success);
+}
+
 /* Soundboard left dock mode */
 .application.wgtngmSoundboard.docked-left {
     position: fixed !important;
     left: 0 !important;
-    z-index: 70 !important;
+/*    z-index: 70 !important;*/
     transition: transform 0.15s ease;
     overflow: visible !important;
     max-height: calc(100vh - 120px);

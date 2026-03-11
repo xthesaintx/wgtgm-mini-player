@@ -320,7 +320,7 @@ export class wgtngmSoundboardSheet extends wgtngmsb {
     async _renderFrame(options) {
         const frame = await super._renderFrame(options);
         if (!this.hasFrame) return frame;
-        const dockIcon = this.#dockMode ? "window-maximize" : "anchor";
+        const dockIcon = this.#dockMode ? "window-maximize" : "left-to-bracket";
         const copyId = `
         <button type="button" class="header-control fa-solid fa-${dockIcon} icon" data-action="set-dock-sb"
                 data-tooltip="Toggle left dock mode" aria-label="Toggle left dock mode"></button>
@@ -461,7 +461,7 @@ static async #onToggleDockMode(event, target) {
     }
     await game.settings.set(MODULE_NAME, "sbDockMode", this.#dockMode);
     target.classList.toggle("fa-window-maximize", this.#dockMode);
-    target.classList.toggle("fa-anchor", !this.#dockMode);
+    target.classList.toggle("fa-left-to-bracket", !this.#dockMode);
     this.render(true);
 }
 

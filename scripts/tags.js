@@ -4,6 +4,8 @@ import { confirmationDialog } from "./helper.js";
 import { ttrpgIntegration } from "./ttrpg.js"; 
 import { filterTracksBySelection, sanitizeImportedTagData } from "./tag-utils.js";
 const AUDIO_EXTENSIONS = new Set(Object.keys(CONST.AUDIO_FILE_EXTENSIONS).map(e => `.${e.toLowerCase()}`));
+const FAVORITES_PLAYLIST_NAME = "favorites-miniPlayer";
+const TAG_PLAYLIST_NAME = "taglist-miniPlayer";
 const FilePicker = foundry.applications.apps.FilePicker.implementation;
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -106,7 +108,10 @@ export class TagManager {
 
     async scanLibrary({ force = false } = {}) {
         const musicFolder = game.settings.get(MODULE_NAME, "music-folder");
-        if (!musicFolder) {
+        const includePlaylistSounds = game.settings.get(MODULE_NAME, "include-playlist-sounds-in-tag-scan");
+        const playlistFingerprint = includePlaylistSounds ? this._getPlaylistScanFingerprint() : "";
+
+        if (!musicFolder && !includePlaylistSounds) {
             ui.notifications.warn("Mini Player: Music folder not set.");
             return [];
         }
@@ -114,24 +119,40 @@ export class TagManager {
         if (!force) {
             if (this.allTracks.length > 0) return this.allTracks;
             const cached = game.settings.get(MODULE_NAME, "trackScanCache");
-            if (cached?.folder === musicFolder && Array.isArray(cached?.tracks)) {
+            if (
+                cached?.folder === musicFolder &&
+                cached?.includePlaylistSounds === includePlaylistSounds &&
+                cached?.playlistFingerprint === playlistFingerprint &&
+                Array.isArray(cached?.tracks)
+            ) {
                 this.allTracks = cached.tracks;
                 return this.allTracks;
             }
         }
 
         const files = [];
-        await this._scanRecursive(musicFolder, files);
+        const seenPaths = new Set();
+
+        if (musicFolder) {
+            await this._scanRecursive(musicFolder, files, seenPaths);
+        }
+
+        if (includePlaylistSounds) {
+            this._collectPlaylistTracks(files, seenPaths);
+        }
+
         this.allTracks = files;
         await game.settings.set(MODULE_NAME, "trackScanCache", {
             folder: musicFolder,
+            includePlaylistSounds,
+            playlistFingerprint,
             tracks: files,
             scannedAt: Date.now()
         });
         return files;
     }
 
-    async _scanRecursive(path, fileList) {
+    async _scanRecursive(path, fileList, seenPaths = new Set()) {
         const dirName = path.split("/").pop();
         if (dirName.toLowerCase().endsWith("-sfx")) {
             return;
@@ -143,6 +164,8 @@ export class TagManager {
             for (const file of result.files) {
                 const ext = `.${file.split(".").pop()}`.toLowerCase();
                 if (AUDIO_EXTENSIONS.has(ext)) {
+                    if (seenPaths.has(file)) continue;
+                    seenPaths.add(file);
                     fileList.push({
                         path: file,
                         name: formatTrackName(file)
@@ -151,11 +174,57 @@ export class TagManager {
             }
 
             for (const dir of result.dirs) {
-                await this._scanRecursive(dir, fileList);
+                await this._scanRecursive(dir, fileList, seenPaths);
             }
         } catch (e) {
             console.warn(`Mini Player | Failed to scan directory "${path}"`, e);
         }
+    }
+
+    _collectPlaylistTracks(fileList, seenPaths) {
+        for (const playlist of game.playlists) {
+            if (this._isMiniPlayerPlaylist(playlist)) continue;
+            if (this._isSoundboardOnlyPlaylist(playlist)) continue;
+
+            for (const sound of playlist.sounds) {
+                const path = sound?.path?.trim();
+                if (!path || seenPaths.has(path)) continue;
+
+                seenPaths.add(path);
+                fileList.push({
+                    path,
+                    name: sound.name || formatTrackName(path)
+                });
+            }
+        }
+    }
+
+    _isMiniPlayerPlaylist(playlist) {
+        if (!playlist) return false;
+        if (playlist.getFlag(MODULE_NAME, "imported") === true) return true;
+        if (playlist.getFlag(MODULE_NAME, "createdFromTags") === true) return true;
+        if (playlist.getFlag(MODULE_NAME, "tagPlaylist") === true) return true;
+
+        const normalizedName = playlist.name?.toLowerCase();
+        return normalizedName === FAVORITES_PLAYLIST_NAME.toLowerCase() || normalizedName === TAG_PLAYLIST_NAME.toLowerCase();
+    }
+
+    _getPlaylistScanFingerprint() {
+        const parts = [];
+        for (const playlist of game.playlists) {
+            if (this._isMiniPlayerPlaylist(playlist)) continue;
+            if (this._isSoundboardOnlyPlaylist(playlist)) continue;
+            parts.push(`${playlist.id}:${playlist.sounds.size}`);
+        }
+        return parts.sort().join("|");
+    }
+
+    _isSoundboardOnlyPlaylist(playlist) {
+        if (!playlist) return false;
+        return (
+            playlist.mode === CONST.PLAYLIST_MODES.DISABLED ||
+            playlist.parent?.mode === CONST.PLAYLIST_MODES.DISABLED
+        );
     }
 
     getTags(path) {
@@ -215,20 +284,18 @@ export class TagManager {
      * Remove keys from Database that are not found in the Active Scan.
      */
     async cleanUpTags() {
-        if (!this.allTracks || this.allTracks.length === 0) {
-            await this.scanLibrary();
-        }
-        if (this.allTracks.length === 0) {
-            ui.notifications.warn("Mini Player: No tracks found in scan. Cleanup aborted to prevent data loss.");
-            return 0;
-        }
+        await this.scanLibrary({ force: true });
+        if (!this.allTracks || this.allTracks.length === 0) return 0;
 
         const validPaths = new Set(this.allTracks.map(t => t.path));
         const dbPaths = Object.keys(this.tags);
         let removedCount = 0;
 
         for (const path of dbPaths) {
-            if (!validPaths.has(path)) {
+            const tagList = Array.isArray(this.tags[path]) ? this.tags[path] : [];
+            const hasTags = tagList.length > 0;
+
+            if (!validPaths.has(path) && !hasTags) {
                 delete this.tags[path];
                 removedCount++;
             }
@@ -312,17 +379,22 @@ export class TagEditor extends HandlebarsApplicationMixin(ApplicationV2) {
             },
             cleanTags: async function (event, target) {
                 const confirm = await confirmationDialog(
-                    "This will permanently remove tags for files that are no longer in your Music Directory. <br><br><strong>Ensure your hard drives/modules are loaded correctly before proceeding.</strong>"
+                    "This refreshes the track scan and removes only untagged/empty entries for files no longer found. Tagged missing tracks are preserved. <br><br><strong>Ensure your hard drives/modules are loaded correctly before proceeding.</strong>"
                 );
                 if (confirm) {
                     const count = await game.wgtngmTags.cleanUpTags();
                     if (count > 0) {
                         ui.notifications.info(`Mini Player: Cleaned up ${count} missing tracks from the database.`);
-                        this.render();
                     } else {
                         ui.notifications.info("Mini Player: Database is already clean.");
                     }
+                    this.render();
                 }
+            },
+            rescanTracks: async function () {
+                await game.wgtngmTags.scanLibrary({ force: true });
+                ui.notifications.info("Mini Player: Track scan refreshed.");
+                this.render();
             },
             exportTags: async function (event, target) {
                 await game.wgtngmTags.exportTags();
@@ -352,11 +424,13 @@ export class TagEditor extends HandlebarsApplicationMixin(ApplicationV2) {
     async _renderFrame(options) {
         const frame = await super._renderFrame(options);
         if (!this.hasFrame) return frame;
-        const filterIcon = this.onlyUntagged ? "fa-tags-slash" : "fa-tags";
+        const filterIcon = this.onlyUntagged ? "fa-tags" : "fa-tags";
         const filterTooltip = this.onlyUntagged
             ? "Showing tracks with no tags only (click for all tracks)"
             : "Showing all tracks (click for untagged only)";
         const copyId = `
+        <button type="button" class="header-control fa-solid fa-rotate icon" data-action="rescanTracks"
+                data-tooltip="Rescan Tracks" aria-label="Rescan Tracks"></button>
         <button type="button" class="header-control fa-solid fa-file-export icon" data-action="exportTags"
                 data-tooltip="Export Tags to JSON" aria-label="Export Tags to JSON"></button>
         <button type="button" class="header-control fa-solid fa-file-import icon" data-action="importTagsTrigger"

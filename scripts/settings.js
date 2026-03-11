@@ -156,6 +156,19 @@ export default async function miniplayerSettings() {
         }
     });
 
+    game.settings.register("wgtgm-mini-player", "include-playlist-sounds-in-tag-scan", {
+        name: L("includePlaylistSoundsInTagScan.name"),
+        hint: L("includePlaylistSoundsInTagScan.hint"),
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: false,
+        onChange: async () => {
+            await game.settings.set("wgtgm-mini-player", "trackScanCache", {});
+            if (game.wgtngmTags) game.wgtngmTags.allTracks = [];
+        }
+    });
+
     game.settings.register("wgtgm-mini-player", "trackScanCache", {
         scope: "client",
         config: false,
@@ -260,6 +273,31 @@ export default async function miniplayerSettings() {
                  game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render(true);
              }
         }
+    });
+    game.settings.register("wgtgm-mini-player", "dockLeft", {
+    name: "Dock Mini Player Left",
+    hint: "If enabled, the mini player docks to the left side of the screen.",
+    scope: "client",
+    config: true,
+    default: false,
+    type: Boolean,
+        onChange: () => {
+             if (game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance?.rendered) {
+                 game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance.render(true);
+             }
+        }
+    });
+    game.settings.register("wgtgm-mini-player", "dockLeftTop", {
+        scope: "client",
+        config: false,
+        type: Number,
+        default: 100
+    });
+    game.settings.register("wgtgm-mini-player", "dockLeftCollapsed", {
+        scope: "client",
+        config: false,
+        type: Boolean,
+        default: false
     });
 
     game.keybindings.register("wgtgm-mini-player", "MiniPlayer", {

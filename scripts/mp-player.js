@@ -45,6 +45,8 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
                 buttons: [0, 2],
             },
             "set-dock": this.#_toggleDock,
+            "set-dock-left": this.#_toggleDockLeft,
+            "toggle-dock-left-panel": this.#_toggleDockLeftPanel,
 
 
         },
@@ -64,6 +66,11 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
     #includeTTRPG = game.settings.get("wgtgm-mini-player", "ttrpgSourceEnabled") ?? false;
     #tagPlaylistName = TAG_PLAYLIST_NAME;
     #tagUpdateTimeout = null;
+    #dockLeft = game.settings.get(MODULE_NAME, "dockLeft") ?? false;
+    #dockLeftTop = Number(game.settings.get(MODULE_NAME, "dockLeftTop")) || 100;
+    #dockLeftCollapsed = game.settings.get(MODULE_NAME, "dockLeftCollapsed") ?? false;
+    #compactClassState = "normal";
+    #pendingDockLeftDimensions = null;
     dontUpdate = false;
     positionDirty = false;
 
@@ -76,17 +83,27 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
     setPosition(options = {}) {
         const position = super.setPosition(options);
         this.positionDirty = true;
+        if (this.#dockLeft && Number.isFinite(position?.top)) {
+            this.#dockLeftTop = Math.max(0, Math.round(position.top));
+            game.settings.set(MODULE_NAME, "dockLeftTop", this.#dockLeftTop);
+        }
         return position;
+    }
+
+    #saveWindowDimensionsIfAllowed() {
+        const dockSidebar = game.settings.get(MODULE_NAME, "dockSidebar");
+        if (dockSidebar || !this.position) return;
+        const { width, height, left, top } = this.position;
+        if (![width, height, left, top].every(Number.isFinite)) return;
+        game.settings.set(MODULE_NAME, "mpSheetDimensions", { width, height, left, top });
     }
 
     async close(options) {
         if (this.element) {
             this.element.style.setProperty("display", "none", "important");
         }
-        if (this.positionDirty || this.position) {
-            const { width, height, left, top } = this.position;
-            game.settings.set("wgtgm-mini-player", "mpSheetDimensions", { width, height, left, top });
-        }
+        game.settings.set(MODULE_NAME, "dockLeftCollapsed", this.#dockLeftCollapsed);
+        this.#saveWindowDimensionsIfAllowed();
         const currentStates = game.settings.get("wgtgm-mini-player", "mpSbOpened");
         game.settings.set("wgtgm-mini-player", "mpSbOpened", {
             ...currentStates,
@@ -96,6 +113,26 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         if (this.#tagUpdateTimeout) clearTimeout(this.#tagUpdateTimeout);
         this._resizeObserver?.disconnect();
         return super.close(options);
+    }
+
+    async minimize() {
+        if (this.#dockLeft) {
+            this.#dockLeftCollapsed = !this.#dockLeftCollapsed;
+            await game.settings.set(MODULE_NAME, "dockLeftCollapsed", this.#dockLeftCollapsed);
+            this.#applyDockLeftState();
+            return this;
+        }
+        return super.minimize();
+    }
+
+    async maximize() {
+        if (this.#dockLeft) {
+            this.#dockLeftCollapsed = false;
+            await game.settings.set(MODULE_NAME, "dockLeftCollapsed", false);
+            this.#applyDockLeftState();
+            return this;
+        }
+        return super.maximize();
     }
 
     async _prepareContext(options) {
@@ -413,29 +450,12 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
     async _onRender(context, options) {
         await super._onRender(context, options);
         this._activateListeners(this.element);
+        const dockSidebar = game.settings.get(MODULE_NAME, "dockSidebar");
+        this.#dockLeft = game.settings.get(MODULE_NAME, "dockLeft") ?? this.#dockLeft;
+        this.#dockLeftTop = Number(game.settings.get(MODULE_NAME, "dockLeftTop")) || this.#dockLeftTop;
+        this.#dockLeftCollapsed = game.settings.get(MODULE_NAME, "dockLeftCollapsed") ?? this.#dockLeftCollapsed;
 
         const target = this.element;
-        if (!this._resizeObserver) {
-
-
-            this._resizeObserver = new ResizeObserver((entries) => {
-                for (const entry of entries) {
-                    const { width, height } = entry.contentRect;
-                    if (height < 145) {
-                        target.classList.remove("pre-compact-mode");
-                        target.classList.add("compact-mode");
-                    } else if (height < 165) {
-                        target.classList.add("pre-compact-mode");
-                    } else {
-                        target.classList.remove("pre-compact-mode");
-                        target.classList.remove("compact-mode");
-                    }
-                    this.positionDirty = true;
-                }
-            });
-            this._resizeObserver.observe(this.element);
-        }
-        const dockSidebar = game.settings.get(MODULE_NAME, "dockSidebar");
         const players = document.getElementById("playlists");
         const directoryHeader = players?.querySelector(".global-volume") || players?.querySelector(".directory-header");
         if (directoryHeader) {
@@ -447,9 +467,10 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         const dockedTheme = `theme-${activeTheme}`;
 
 
-        if (dockSidebar) {
+        if (dockSidebar && !this.#dockLeft) {
             if (directoryHeader && directoryHeader.parentNode) {
                 this.element.classList.add("docked", dockedTheme);
+                this.element.classList.remove("docked-left");
                 this.element.style.top = "";
                 this.element.style.left = "";
                 this.element.style.width = "";
@@ -460,10 +481,33 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
                     directoryHeader.after(this.element);
                 }
             }
-        } else {
+        } else if (this.#dockLeft) {
             this.element.classList.remove("docked");
             const classesToRemove = [...this.element.classList].filter(c => c.startsWith("theme-"));
             this.element.classList.remove(...classesToRemove);
+            if (directoryHeader && this.element.parentNode === directoryHeader.parentNode) {
+                document.body.appendChild(this.element);
+            }
+            this.element.style.removeProperty("position");
+            this.element.classList.add("docked-left");
+            this.element.style.setProperty("left", "0px", "important");
+            this.element.style.setProperty("top", `${this.#dockLeftTop}px`, "important");
+            if (this.#pendingDockLeftDimensions) {
+                const { width, height } = this.#pendingDockLeftDimensions;
+                this.setPosition({ width, height, left: 0, top: this.#dockLeftTop });
+                this.#pendingDockLeftDimensions = null;
+            }
+            this.#applyDockLeftState();
+        } else {
+            this.element.classList.remove("docked");
+            this.element.classList.remove("docked-left");
+            this.element.classList.remove("collapsed");
+            const classesToRemove = [...this.element.classList].filter(c => c.startsWith("theme-"));
+            this.element.classList.remove(...classesToRemove);
+            this.element.style.removeProperty("left");
+            this.element.style.removeProperty("top");
+            const existingHandle = this.element.querySelector(".wgtngm-mp-dock-handle");
+            if (existingHandle) existingHandle.remove();
             if (directoryHeader && this.element.parentNode === directoryHeader.parentNode) {
                 document.body.appendChild(this.element);
             }
@@ -476,11 +520,52 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
             }
 
         }
+        if (dockSidebar) {
+            this._resizeObserver?.disconnect();
+            this._resizeObserver = null;
+            this.#compactClassState = "normal";
+            target.classList.remove("pre-compact-mode");
+            target.classList.remove("compact-mode");
+        } else if (!this._resizeObserver) {
+            this._resizeObserver = new ResizeObserver((entries) => {
+                for (const entry of entries) {
+                    const { height } = entry.contentRect;
+                    const nextState = this.#resolveCompactState(height);
+                    if (nextState === this.#compactClassState) continue;
+                    this.#compactClassState = nextState;
+                    if (nextState === "compact") {
+                        target.classList.remove("pre-compact-mode");
+                        target.classList.add("compact-mode");
+                    } else if (nextState === "pre-compact") {
+                        target.classList.remove("compact-mode");
+                        target.classList.add("pre-compact-mode");
+                    } else {
+                        target.classList.remove("pre-compact-mode");
+                        target.classList.remove("compact-mode");
+                    }
+                    this.positionDirty = true;
+                }
+            });
+            this._resizeObserver.observe(this.element);
+        }
+    }
 
-
-
-
-
+    #resolveCompactState(rawHeight) {
+        const height = Number(rawHeight);
+        if (!Number.isFinite(height) || height < 90) return this.#compactClassState;
+        const current = this.#compactClassState;
+        if (current === "compact") {
+            if (height > 152) return height < 165 ? "pre-compact" : "normal";
+            return "compact";
+        }
+        if (current === "pre-compact") {
+            if (height < 140) return "compact";
+            if (height > 172) return "normal";
+            return "pre-compact";
+        }
+        if (height < 145) return "compact";
+        if (height < 165) return "pre-compact";
+        return "normal";
     }
 
     _activateListeners(html) {
@@ -620,8 +705,7 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
 
         if (this.positionDirty) {
             this.positionDirty = false;
-            const { width, height, left, top } = this.position;
-            game.settings.set("wgtgm-mini-player", "mpSheetDimensions", { width, height, left, top });
+            this.#saveWindowDimensionsIfAllowed();
         }
 
         const playlist = game.playlists.get(this.#currentPlaylist?.id);
@@ -686,7 +770,8 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
     async _renderFrame(options) {
         const frame = await super._renderFrame(options);
         if (!this.hasFrame) return frame;
-        const dockedState = game.settings.get(MODULE_NAME, "dockSidebar") ? "window-maximize" : "anchor";
+        const dockedState = game.settings.get(MODULE_NAME, "dockSidebar") ? "window-maximize" : "right-to-bracket";
+        const dockLeftState = this.#dockLeft ? "active" : "";
 
         const copyId = `
         <button type="button" class="header-control fa-solid fa-filter icon" data-action="create-taglist"
@@ -700,7 +785,9 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
         <button type="button" class="header-control fa-solid fa-tags icon ${this.#tagMode}" data-action="toggle-tag-mode"
                 data-tooltip="${game.i18n.localize(`${MODULE_NAME}.ui.toggleTagMode`)}" aria-label="${game.i18n.localize(`${MODULE_NAME}.ui.toggleTagMode`)}"></button>
       <button type="button" class="header-control fa-solid fa-${dockedState} icon" data-action="set-dock"
-              data-tooltip="${game.i18n.localize(`${MODULE_NAME}.ui.toggleDock`)}" aria-label="${game.i18n.localize(`${MODULE_NAME}.ui.toggleDock`)}"></button>`
+              data-tooltip="${game.i18n.localize(`${MODULE_NAME}.ui.toggleDock`)}" aria-label="${game.i18n.localize(`${MODULE_NAME}.ui.toggleDock`)}"></button>
+      <button type="button" class="header-control fa-solid fa-left-to-bracket icon ${dockLeftState}" data-action="set-dock-left"
+              data-tooltip="Toggle left dock" aria-label="Toggle left dock"></button>`
         this.window.close.insertAdjacentHTML("beforebegin", copyId);
         return frame;
     }
@@ -708,10 +795,82 @@ export class wgtngmMiniPlayerSheet extends wgtngmmp {
 
     static async #_toggleDock(event, target) {
         const dockedState = game.settings.get(MODULE_NAME, "dockSidebar");
+        if (!dockedState) {
+            this.#saveWindowDimensionsIfAllowed();
+            await game.settings.set(MODULE_NAME, "dockLeft", false);
+            await game.settings.set(MODULE_NAME, "dockLeftCollapsed", false);
+            this.#dockLeft = false;
+            this.#dockLeftCollapsed = false;
+            const leftDockBtn = this.element?.querySelector('[data-action="set-dock-left"]');
+            if (leftDockBtn) leftDockBtn.classList.remove("active");
+        }
         await game.settings.set(MODULE_NAME, "dockSidebar", !dockedState);
         target.classList.toggle("fa-window-maximize", !dockedState);
-        target.classList.toggle("fa-anchor", dockedState);
+        target.classList.toggle("fa-right-to-bracket", dockedState);
         this.render(true);
+    }
+
+    static async #_toggleDockLeft(event, target) {
+        const wasSideDocked = game.settings.get(MODULE_NAME, "dockSidebar");
+        this.#dockLeft = !this.#dockLeft;
+        if (this.#dockLeft) {
+            const saved = game.settings.get(MODULE_NAME, "mpSheetDimensions") || {};
+            const rect = this.element?.getBoundingClientRect?.();
+            const liveWidth = Number.isFinite(rect?.width) && rect.width > 0 ? Math.round(rect.width) : null;
+            const liveHeight = Number.isFinite(rect?.height) && rect.height > 0 ? Math.round(rect.height) : null;
+            const currentWidth = liveWidth ?? (Number.isFinite(this.position?.width) && this.position.width > 0 ? this.position.width : null);
+            const currentHeight = liveHeight ?? (Number.isFinite(this.position?.height) && this.position.height > 0 ? this.position.height : null);
+            const savedWidth = Number.isFinite(saved.width) && saved.width > 0 ? saved.width : null;
+            const savedHeight = Number.isFinite(saved.height) && saved.height > 0 ? saved.height : null;
+            const targetWidth = wasSideDocked ? (savedWidth ?? currentWidth) : (currentWidth ?? savedWidth);
+            const targetHeight = wasSideDocked ? (savedHeight ?? currentHeight) : (currentHeight ?? savedHeight);
+            if (Number.isFinite(targetWidth) && Number.isFinite(targetHeight)) {
+                this.#pendingDockLeftDimensions = { width: targetWidth, height: targetHeight };
+            } else {
+                this.#pendingDockLeftDimensions = null;
+            }
+            this.#dockLeftTop = Number.isFinite(this.position?.top) ? Math.max(0, Math.round(this.position.top)) : this.#dockLeftTop;
+            await game.settings.set(MODULE_NAME, "dockLeftTop", this.#dockLeftTop);
+            this.#dockLeftCollapsed = false;
+            await game.settings.set(MODULE_NAME, "dockLeftCollapsed", false);
+            await game.settings.set(MODULE_NAME, "dockSidebar", false);
+            const sideDockBtn = this.element?.querySelector('[data-action="set-dock"]');
+            if (sideDockBtn) {
+                sideDockBtn.classList.remove("fa-window-maximize");
+                sideDockBtn.classList.add("fa-right-to-bracket");
+            }
+        } else {
+            this.#dockLeftCollapsed = false;
+            await game.settings.set(MODULE_NAME, "dockLeftCollapsed", false);
+        }
+        await game.settings.set(MODULE_NAME, "dockLeft", this.#dockLeft);
+        target.classList.toggle("active", this.#dockLeft);
+        this.render(true);
+    }
+
+    #applyDockLeftState() {
+        if (!this.element) return;
+        this.element.classList.toggle("collapsed", this.#dockLeft && this.#dockLeftCollapsed);
+
+        if (!this.#dockLeft) return;
+        let handle = this.element.querySelector(".wgtngm-mp-dock-handle");
+        if (!handle) {
+            handle = document.createElement("button");
+            handle.type = "button";
+            handle.className = "wgtngm-mp-dock-handle";
+            handle.dataset.action = "toggle-dock-left-panel";
+            this.element.appendChild(handle);
+        }
+        handle.title = this.#dockLeftCollapsed ? "Expand mini player" : "Collapse mini player";
+        handle.setAttribute("aria-label", handle.title);
+        handle.innerHTML = `<i class="fas fa-chevron-${this.#dockLeftCollapsed ? "right" : "left"}"></i>`;
+    }
+
+    static async #_toggleDockLeftPanel() {
+        if (!this.#dockLeft) return;
+        this.#dockLeftCollapsed = !this.#dockLeftCollapsed;
+        await game.settings.set(MODULE_NAME, "dockLeftCollapsed", this.#dockLeftCollapsed);
+        this.#applyDockLeftState();
     }
 
     static async #rescanLibrary() {
