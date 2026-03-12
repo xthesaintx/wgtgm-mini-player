@@ -1,3 +1,8 @@
+## 6.6
+- Doc mode for soundboard and mini player
+- edit non mini player imported track tags
+- backend updates
+
 ## 5.9
 - Added Mini Player and Soundboard tools to Sounds scene controls
 - Added Soundboard “remember last playlist”
