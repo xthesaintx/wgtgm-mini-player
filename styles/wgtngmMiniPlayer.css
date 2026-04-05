@@ -111,6 +111,8 @@ body.theme-light .wgtngmSoundboard .sound-button.playing
     box-sizing: border-box;
     text-align: center;
     cursor: pointer;
+        width: 100%;
+
 }
 
 .wgtngmMiniPlayer .wgtngm-drawer-content {

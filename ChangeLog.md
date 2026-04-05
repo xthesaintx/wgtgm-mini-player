@@ -1,3 +1,8 @@
+## 6.7
+- update to tagging, persistant across worlds
+- asset librarian compatability
+- foundry 14
+
 ## 6.6
 - Doc mode for soundboard and mini player
 - edit non mini player imported track tags

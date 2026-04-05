@@ -44,6 +44,13 @@ export default async function miniplayerSettings() {
         default: {}
     });
 
+    game.settings.register("wgtgm-mini-player", "trackTagsFileStoreMigrated", {
+        scope: "world",
+        config: false,
+        type: Boolean,
+        default: false
+    });
+
     game.settings.register("wgtgm-mini-player", "mpSheetDimensions", {
         scope: "client",
         config: false,  

@@ -3,6 +3,7 @@ import { formatTrackName } from "./importer.js";
 import { confirmationDialog } from "./helper.js";
 import { ttrpgIntegration } from "./ttrpg.js"; 
 import { filterTracksBySelection, sanitizeImportedTagData } from "./tag-utils.js";
+import { TrackTagStore } from "./track-tag-store.js";
 const AUDIO_EXTENSIONS = new Set(Object.keys(CONST.AUDIO_FILE_EXTENSIONS).map(e => `.${e.toLowerCase()}`));
 const FAVORITES_PLAYLIST_NAME = "favorites-miniPlayer";
 const TAG_PLAYLIST_NAME = "taglist-miniPlayer";
@@ -94,15 +95,72 @@ function stopPreviewPlayback() {
 
 export class TagManager {
     constructor() {
-        this.tags = game.settings.get(MODULE_NAME, "trackTags") || {};
+        this.tags = {};
+        this.allTracks = [];
+        this._loadPromise = null;
+        this._isLoaded = false;
+    }
 
-        
-        if (!this.tags || typeof this.tags !== "object" || Array.isArray(this.tags)) {
-            console.warn("Mini Player | Tag database is corrupted or invalid format. Resetting to empty object.");
-            this.tags = {};
+    _mergeTagMaps(baseMap, incomingMap) {
+        const merged = TrackTagStore.normalizeMap(baseMap);
+        const normalizedIncoming = TrackTagStore.normalizeMap(incomingMap);
+
+        for (const [path, tags] of Object.entries(normalizedIncoming)) {
+            const current = Array.isArray(merged[path]) ? merged[path] : [];
+            merged[path] = Array.from(new Set([...current, ...tags])).sort((a, b) =>
+                a.localeCompare(b, undefined, { sensitivity: "base" }),
+            );
         }
 
-        this.allTracks = [];
+        return TrackTagStore.normalizeMap(merged);
+    }
+
+    async loadTags({ force = false } = {}) {
+        if (force) {
+            this._isLoaded = false;
+            this._loadPromise = null;
+        }
+
+        if (!force && this._isLoaded) return this.tags;
+        if (!force && this._loadPromise) return this._loadPromise;
+
+        this._loadPromise = (async () => {
+            await TrackTagStore.load({ force });
+            let nextTags = TrackTagStore.normalizeMap(await TrackTagStore.getAllEntries());
+
+            const migrationDone = game.settings.get(MODULE_NAME, "trackTagsFileStoreMigrated") === true;
+            if (!migrationDone) {
+                const legacyTags = TrackTagStore.normalizeMap(game.settings.get(MODULE_NAME, "trackTags") || {});
+                if (Object.keys(legacyTags).length) {
+                    nextTags = this._mergeTagMaps(nextTags, legacyTags);
+                    if (game.user.isGM) {
+                        await TrackTagStore.save(nextTags);
+                    }
+                }
+
+                if (game.user.isGM) {
+                    await game.settings.set(MODULE_NAME, "trackTagsFileStoreMigrated", true);
+                }
+            }
+
+            this.tags = nextTags;
+            this._isLoaded = true;
+            return this.tags;
+        })().catch((error) => {
+            console.error("Mini Player | Failed to load shared track tags", error);
+            this.tags = TrackTagStore.normalizeMap(this.tags);
+            this._isLoaded = true;
+            return this.tags;
+        }).finally(() => {
+            this._loadPromise = null;
+        });
+
+        return this._loadPromise;
+    }
+
+    async _ensureLoaded() {
+        if (this._isLoaded) return this.tags;
+        return this.loadTags();
     }
 
 
@@ -228,10 +286,13 @@ export class TagManager {
     }
 
     getTags(path) {
-        return this.tags[path] || [];
+        if (!this._isLoaded && !this._loadPromise) void this.loadTags();
+        const tags = this.tags[path];
+        return Array.isArray(tags) ? [...tags] : [];
     }
 
     getAllUniqueTags() {
+        if (!this._isLoaded && !this._loadPromise) void this.loadTags();
         const unique = new Set();
         if (!this.tags || typeof this.tags !== "object" || Array.isArray(this.tags)) return [];
 
@@ -263,6 +324,7 @@ export class TagManager {
     }
 
     async addTag(path, tag) {
+        await this._ensureLoaded();
         if (!tag) return;
         tag = tag.toLowerCase().trim();
         if (!this.tags[path]) this.tags[path] = [];
@@ -273,6 +335,7 @@ export class TagManager {
     }
 
     async removeTag(path, tag) {
+        await this._ensureLoaded();
         if (!this.tags[path]) return;
         this.tags[path] = this.tags[path].filter(t => t !== tag);
         if (this.tags[path].length === 0) delete this.tags[path];
@@ -284,6 +347,7 @@ export class TagManager {
      * Remove keys from Database that are not found in the Active Scan.
      */
     async cleanUpTags() {
+        await this._ensureLoaded();
         await this.scanLibrary({ force: true });
         if (!this.allTracks || this.allTracks.length === 0) return 0;
 
@@ -308,10 +372,16 @@ export class TagManager {
     }
 
     async _save() {
-        await game.settings.set(MODULE_NAME, "trackTags", this.tags);
+        this.tags = TrackTagStore.normalizeMap(this.tags);
+        if (!game.user.isGM) {
+            console.warn("Mini Player | Only GMs can persist shared track tags.");
+            return;
+        }
+        await TrackTagStore.save(this.tags);
     }
 
     async exportTags() {
+        await this._ensureLoaded();
         const data = this.tags;
         const filename = `mini-player-tags-export.json`;
         foundry.utils.saveDataToFile(JSON.stringify(data, null, 2), "text/json", filename);
@@ -319,6 +389,7 @@ export class TagManager {
     }
 
     async importTags(importedData, mode = "merge") {
+        await this._ensureLoaded();
         if (!importedData || typeof importedData !== "object" || Array.isArray(importedData)) {
             ui.notifications.error("Mini Player: Invalid tag data format. Expected an object map, not an array or primitive.");
             return;

@@ -28,6 +28,7 @@ Hooks.once("i18nInit", async function () {
 
 Hooks.once("ready", async function () {
     game.wgtngmTags = new TagManager();
+    await game.wgtngmTags.loadTags();
     game.wgtngmMiniPlayer = new wgtngmMiniPlayerSheet();
     game.wgtngmMiniPlayer.wgtngmMiniPlayerInstance = null;
     game.wgtngmSoundboard = new wgtngmSoundboardSheet();
