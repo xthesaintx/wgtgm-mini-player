@@ -1,3 +1,6 @@
+# NOTE
+This is no longer being hosted on GitHub and there is now a centralised issue tracking repo [here](https://github.com/xthesaintx/wgtngm/issues)
+
 # Mini Player
 
 Mini Player is a compact and intuitive audio player for Foundry VTT. It provides a streamlined interface to manage your playlists and tracks without taking up valuable screen space. Key features include:
@@ -18,7 +21,7 @@ Patreon: www.patreon.com/wgtngm
 
 Official Package URL: https://foundryvtt.com/packages/wgtgm-mini-player
 
-## 📖 [Documentation](https://campaigncodex.wgtngm.com/miniplayer)
+## [Documentation](https://campaigncodex.wgtngm.com/miniplayer)
 
 
 ## Support & Community
@@ -29,7 +32,6 @@ For bug reports, feature requests or general chat about the module or other publ
 
 1. In Foundry, navigate to the Add-on Modules tab.  
 2. Click Install Module.  
-3. Either search for "Mini Player" or  paste the manifest URL:   
-   [https://github.com/xthesaintx/wgtgm-mini-player/releases/latest/download/module.json](https://github.com/xthesaintx/wgtgm-mini-player/releases/latest/download/module.json)
+3. Either search for "Mini Player" 
 4. Click Install.  
 5. Enable the module in your world.
