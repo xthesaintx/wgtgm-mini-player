@@ -1,32 +1,16 @@
-# NOTE
-This is no longer being hosted on GitHub and there is now a centralised issue tracking repo [here](https://github.com/xthesaintx/wgtngm/issues)
+# Project Relocated
+This project is no longer hosted on GitHub. Development and maintenance are actively continuing at our new centralised home.
 
-# Mini Player
+### Links
+* **Website:** [wgtngm.com](https://wgtngm.com/)
+* **Documentation**: [campaigncodex.wgtngm.com](https://campaigncodex.wgtngm.com/)
+* **Issue Tracking:** [Centralized Issue Tracker](https://github.com/xthesaintx/wgtngm/issues)
+* **Video Content:** [YouTube Channel](https://www.youtube.com/@WgtnGM)
 
-Mini Player is a compact and intuitive audio player for Foundry VTT. It provides a streamlined interface to manage your playlists and tracks without taking up valuable screen space. Key features include:
-- Quick access to all your playlists and tracks.
-- Standard playback controls (play/pause, next/previous, stop).
-- Volume slider and a one-click mute button.
-- Remembers the last played track, even after closing.
-- Persistent window size and position.
+### Community and Support
+* **Discord:** [Join the community](https://discord.gg/fycwH79s2y)
+* **Support the Development:** [Patreon](https://patreon.com/wgtngm) or [Ko-fi](https://ko-fi.com/wgtngm)
 
-## YouTube Overview
-[![Mini Player Video Overview](https://img.youtube.com/vi/7VqU8gyq8Oc/0.jpg)](https://youtu.be/7VqU8gyq8Oc?si=q1KFPZVy2fGuqIn8)
-
-Discord: https://discord.gg/fycwH79s2y
-
-Website: www.wgtngm.com
-
-Patreon: www.patreon.com/wgtngm
-
-Official Package URL: https://foundryvtt.com/packages/wgtgm-mini-player
-
-## [Documentation](https://campaigncodex.wgtngm.com/miniplayer)
-
-
-## Support & Community
-
-For bug reports, feature requests or general chat about the module or other publications, please join our community on [Discord](https://discord.gg/fycwH79s2y).
 
 ## Installation
 
